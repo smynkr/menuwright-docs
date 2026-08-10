@@ -122,12 +122,13 @@ jobs:
           DOCS_AGENT_GLM_MODEL: ${{ vars.DOCS_AGENT_GLM_MODEL }}
           DOCS_AGENT_LOG_DIR: ${{ github.workspace }}/docs-agent-logs
         run: |
-          node axiom-docs/pipeline/docs-agent.mjs \
+          node menuwright-docs/pipeline/docs-agent.mjs \
             --repo "${{ github.repository }}" \
             --pr "${{ needs.detect.outputs.pr_number }}" \
             --docs-repo "smynkr/menuwright-docs" \
-            --docs-repo-path "$(pwd)/axiom-docs" \
+            --docs-repo-path "$(pwd)/menuwright-docs" \
             --product "$DOCS_AGENT_PRODUCT" \
+            --standalone \
             --backend glm
 
       - name: Upload debug logs
