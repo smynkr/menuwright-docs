@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "source_index": {
+    ".codex/harness-memory.json": [
+      "ledger"
+    ],
+    "README.md": [
+      "current-state",
+      "ledger"
+    ],
+    "_migration/tools/lib/shared.mjs": [
+      "current-state",
+      "ledger"
+    ],
+    "components/brand/products.ts": [
+      "ledger"
+    ],
+    "docs.json": [
+      "current-state",
+      "ledger"
+    ],
+    "menuwright/index.mdx": [
+      "current-state"
+    ],
+    "next.config.mjs": [
+      "current-state",
+      "ledger"
+    ],
+    "package.json": [
+      "current-state",
+      "ledger"
+    ],
+    "public/logo.svg": [
+      "ledger"
+    ]
+  },
+  "source_sha256": {
+    ".codex/harness-memory.json": "6bed6fa137bc1ab826846fde3e72d7c6f6fcdcb653a6849a945b91cec5c94b80",
+    "README.md": "cbb9a374125962333e50dc4ecc6ea70e11405a1387672a7ff50017279353d01d",
+    "_migration/tools/lib/shared.mjs": "d688253f2e5eddc449b1cf5b9f5d4f1ee20b894ca9eb98ec634627f093916310",
+    "components/brand/products.ts": "9b186cd5be6e5e8c51fe8bf48bbc0b20df402aaeeef9a8267452d4f3febc31c0",
+    "docs.json": "a6a7c5b4acbf1a346f7408b8201a91d3e63c91d8ec04411d19f158fbb8f86370",
+    "menuwright/index.mdx": "c580af20b3a7bbaab55126858327befb40a929eb19c696e085b05f8ef08951e1",
+    "next.config.mjs": "7038ca6780f43d11037d89a796aa73d8c5dbc528a6171ffd54cfea1573df88d3",
+    "package.json": "bd2eee76f102c0ea277df67e8cc46d710f87fa71265745e00409882665a9f7e1",
+    "public/logo.svg": "537b5db7105ee91f429793f9ce74a6c33a008b8162671d5148dd353dd53d0f7f"
+  }
+}

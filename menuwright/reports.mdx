@@ -1,0 +1,59 @@
+---
+title: "Reports"
+description: "Weekly email digests and monthly PDF deep dives, scheduled in each restaurant's local timezone."
+---
+
+MenuWright turns its analysis into two recurring reports, scheduled around each restaurant's own timezone.
+
+<Callout>
+  Reports are a **Pro** feature. Free accounts see an upgrade call to action instead.
+</Callout>
+
+## Weekly email digest
+
+Every Monday at **8 AM local time**, Pro restaurants receive a plain-HTML email digest with:
+
+- The top recommendations and their projected impact
+- Key metric changes from the previous week
+- Quick-action links into the dashboard
+
+## Monthly PDF deep dive
+
+On the first of the month at **8 AM local time**, Pro restaurants receive a full PDF report:
+
+- The complete menu matrix visualization
+- An item-by-item analysis table
+- Month-over-month trend charts
+- All AI recommendations with rationale
+- An executive summary — the "you're leaving $X/mo on the table" number
+
+## Timezone-aware scheduling
+
+Each restaurant declares a timezone. The dispatch tasks check the **local hour** per restaurant — so a West Coast restaurant gets its digest at 8 AM PT, not 8 AM UTC. Dispatchers run hourly and deduplicate:
+
+- Weekly digests are skipped if one was already sent in the last 5 days
+- Monthly reports are skipped if one was already sent in the last 27 days
+
+## Delivery
+
+| Detail | Value |
+|---|---|
+| **Weekly digest** | HTML email via Resend |
+| **Monthly report** | PDF generated with WeasyPrint, attached to an email via Resend |
+| **Sender** | `reports@menuwright.com` |
+
+If the PDF renderer is unavailable, generation **fails loudly** rather than sending an HTML file disguised as a PDF.
+
+## Related
+
+<Cards>
+  <Card title="Billing and usage" icon="chart-line" href="/menuwright/billing">
+    Pro unlocks reports; see the plan limits.
+  </Card>
+  <Card title="Menu matrix" icon="target" href="/menuwright/menu-matrix">
+    What the reports analyze.
+  </Card>
+  <Card title="Getting started" icon="rocket" href="/menuwright/getting-started">
+    Set your restaurant timezone during onboarding.
+  </Card>
+</Cards>

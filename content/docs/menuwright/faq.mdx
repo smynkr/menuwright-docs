@@ -1,0 +1,57 @@
+---
+title: MenuWright FAQ
+description: POS support, data boundaries, AI posture, billing, and reports —
+  answers to common MenuWright questions.
+---
+
+## Do I need a POS system to use MenuWright?
+
+No. The fastest path is connecting Square, which syncs your menu and sales automatically. Without a POS, add menu items in the dashboard and import sales history from CSV or Excel — or explore instantly with realistic sample data. See [Square connection](/menuwright/square) and [CSV import](/menuwright/csv-import).
+
+## Which POS systems are supported?
+
+**Square** today, in sandbox mode while the production app is under review. The POS adapter interface is designed so **Toast** and **Clover** can be added without touching the analysis or UI — but they are not implemented yet.
+
+## What if I don't have food cost data?
+
+MenuWright still works — it classifies by popularity and revenue. Once items have food costs, it unlocks true contribution margins and the full profit-based matrix. See [the matrix methodology](/menuwright/menu-matrix).
+
+## How are the AI recommendations generated?
+
+MenuWright analyzes your menu matrix and sales data and produces specific, prioritized recommendations — reprice, promote, bundle, or cut — with a projected monthly dollar impact where one can be estimated. The AI layer uses an OpenAI-compatible interface to a primary and fallback provider; generation is a candidate step, and you decide what to act on. Recommendations fail gracefully: if the provider is unreachable, the analysis completes without recommendations rather than blocking.
+
+## Is my restaurant's data secure?
+
+Every record is scoped to your restaurant, and Square credentials are encrypted at rest. Tokens are deleted if you disconnect. The connection is read-only — MenuWright never modifies your Square data. See the [privacy policy](https://menuwright.com/privacy).
+
+## What does each plan include?
+
+Free: 1 analysis and 3 AI recommendation sets per month. Pro ($99/month): 4 analyses and 20 recommendation sets, plus reports, with metered overage beyond. See [billing and usage](/menuwright/billing) for the full contract.
+
+## Can I cancel anytime?
+
+Yes. Pro is a month-to-month subscription with no long-term commitment — manage your plan from your billing settings.
+
+## Why can't I connect my real Square account?
+
+Production Square onboarding waits for Square's app review of MenuWright's production app. The integration is implemented and tested against the sandbox environment today; this documentation will be updated when production approval lands.
+
+## What reports will I get?
+
+Pro restaurants receive a weekly email digest (Monday, 8 AM local) and a monthly PDF deep dive (1st of the month, 8 AM local), both scheduled per-restaurant timezone. See [reports](/menuwright/reports).
+
+## What is the menu engineering matrix?
+
+It's based on the Kasavana–Smith menu engineering method (1982): every item is classified by profitability (contribution margin) and popularity (menu mix), landing in one of four quadrants — Stars, Crowd Pleasers, Hidden Gems, and Leftovers. See [the methodology](/menuwright/menu-matrix).
+
+## What happens to my data if I leave?
+
+Disconnecting Square deletes the stored credentials immediately. Data is scoped to your restaurant account; reach out to [support@menuwright.com](mailto:support@menuwright.com) for account deletion.
+
+## Does MenuWright write to my Square account?
+
+Never. The integration is strictly read-only: catalog and sales aggregates only. MenuWright never stores card or customer payment details.
+
+## What's on the roadmap?
+
+Toast and Clover adapters, consultant multi-restaurant mode, and an impact tracker are the headline directions — not yet available.

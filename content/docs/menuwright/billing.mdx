@@ -1,0 +1,73 @@
+---
+title: Billing and usage limits
+description: Free and Pro plans, monthly usage limits, overage pricing, and how
+  MenuWright enforces them.
+---
+
+import { ChartLine, LifeBuoy, Rocket } from 'lucide-react';
+
+MenuWright is a freemium subscription. The Free plan demonstrates the core value; Pro unlocks the full workflow.
+
+## Plans
+
+|                               | Free        | Pro               |
+| ----------------------------- | ----------- | ----------------- |
+| **Price**                     | $0          | **$99/month**     |
+| **Analysis runs**             | 1 per month | 4 per month       |
+| **AI recommendation sets**    | 3 per month | 20 per month      |
+| **Overage — analysis**        | —           | $10 per extra run |
+| **Overage — recommendations** | —           | $5 per extra set  |
+| **Menu items**                | Unlimited   | Unlimited         |
+| **POS integration**           | Yes         | Yes               |
+| **Reports (email/PDF)**       | No          | Yes               |
+
+## How usage is counted
+
+Two counters track the current billing cycle: one for analysis runs, one for recommendation sets.
+
+- **Free**: hitting a limit returns a clear `usage_limit_exceeded` error with an upgrade call to action. The atomic claim means a run that fails validation **does not** burn your allowance.
+- **Pro within limits**: runs normally.
+- **Pro over limits**: the run still proceeds, and the overage is reported to Stripe's metered billing — `$10` per analysis, `$5` per recommendation set — invoiced at the end of the billing period.
+
+Counters reset monthly. Pro counters also reset when an `invoice.paid` webhook fires.
+
+Sample-data onboarding is exempt from usage billing.
+
+## Plans, Stripe, and the dashboard
+
+| Surface            | What it does                                                                     |
+| ------------------ | -------------------------------------------------------------------------------- |
+| **Upgrade**        | Stripe Checkout session for the Pro plan; completion flips the restaurant to Pro |
+| **Manage billing** | Stripe Customer Portal for payment method, invoices, and cancellation            |
+| **Usage meter**    | Settings shows "2 of 4 analyses used this month" style progress                  |
+| **Upgrade banner** | Persistent banner on Free accounts with a direct upgrade action                  |
+
+Pro is month-to-month with no long-term commitment. Cancel anytime from billing settings.
+
+<Callout type="warn">
+  The billing contract above is the current product state. Pricing changes are under evaluation — check this page rather than relying on older pricing copy elsewhere.
+</Callout>
+
+## Enforcement behavior
+
+| Action                   | Free                                                    | Pro (within limits) | Pro (over limits)                   |
+| ------------------------ | ------------------------------------------------------- | ------------------- | ----------------------------------- |
+| Run analysis             | Allowed while count \< 1, else blocked with upgrade CTA | Allowed             | Allowed, overage reported to Stripe |
+| Generate recommendations | Allowed while count \< 3, else blocked with upgrade CTA | Allowed             | Allowed, overage reported to Stripe |
+| View reports             | Blocked with upgrade CTA                                | Allowed             | Allowed                             |
+
+## Related
+
+<Cards>
+  <Card icon={<ChartLine />} title="Reports" href="/menuwright/reports">
+    What Pro unlocks for scheduled reporting.
+  </Card>
+
+  <Card icon={<Rocket />} title="Getting started" href="/menuwright/getting-started">
+    Run your first analysis on the Free plan.
+  </Card>
+
+  <Card icon={<LifeBuoy />} title="FAQ" href="/menuwright/faq">
+    Billing, cancellation, and data questions.
+  </Card>
+</Cards>

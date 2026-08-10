@@ -1,0 +1,100 @@
+---
+title: Get started with MenuWright
+description: Sign up, bring your menu and sales data, and run your first menu
+  engineering analysis in under ten minutes.
+---
+
+import { FileText, Plug, Settings, Target } from 'lucide-react';
+
+MenuWright classifies every menu item by profitability and popularity, then turns the result into prioritized recommendations — reprice, promote, bundle, or cut — with projected monthly dollar impact. In this guide you'll sign up, load data, and run your first analysis.
+
+## Prerequisites
+
+- An email address to create your account
+- One of: a **Square account** to sync automatically, a **CSV or Excel file** of sales history, or no data at all (sample-data mode)
+
+## 1. Create your account
+
+Sign up at [menuwright.com](https://menuwright.com). You'll verify your email, then land in the onboarding wizard.
+
+<Callout type="warn">
+  MenuWright is in active development. Square connections run against the sandbox environment today — real-restaurant Square onboarding waits for production app review. CSV import and sample data work fully now.
+</Callout>
+
+## 2. Choose how to bring your data
+
+The onboarding wizard offers three paths:
+
+| Path                 | What it does                                                                                                                                                                |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Connect Square**   | OAuth flow that syncs your catalog and \~90 days of sales automatically, then runs a first analysis. See the [Square guide](/menuwright/square).                            |
+| **Import CSV/Excel** | Upload sales history with columns for item name, date, quantity sold, and gross revenue; optionally include food costs. See the [CSV import guide](/menuwright/csv-import). |
+| **Sample data**      | Load a realistic demo restaurant instantly — useful for exploring the workflow before connecting real data.                                                                 |
+
+You can switch paths later from the dashboard's Data section.
+
+## 3. Review your menu items
+
+After data loads, review the imported menu items and fix any category mismatches. If you imported sales for items that don't exist yet, MenuWright can create them for you (see the CSV guide's `create_missing_items` behavior).
+
+## 4. Enter food costs
+
+Food costs drive contribution margins and the full profit-based matrix. Enter them per item, or upload a cost file with `item_name` and `food_cost` columns. Without food costs, MenuWright still classifies by popularity and revenue — the [menu matrix guide](/menuwright/menu-matrix) explains the difference.
+
+## 5. Run your first analysis
+
+Choose an analysis period and run. MenuWright:
+
+1. Computes menu mix (popularity) and contribution margin (profitability) per item
+2. Places every item in one of four quadrants — **Star**, **Crowd Pleaser**, **Hidden Gem**, or **Leftover**
+3. Generates AI recommendations with projected monthly dollar impact
+4. Saves an immutable snapshot so you can track changes over time
+
+Your first analysis is the moment the product earns its keep: you'll see which items are quietly losing you money and exactly what to do about them.
+
+## 6. Act on the recommendations
+
+The dashboard's Recommendations feed lists prioritized actions with their projected impact. Accept or dismiss each one — your decisions feed back into future recommendation quality.
+
+## What you'll see
+
+| Surface             | What it shows                                                                |
+| ------------------- | ---------------------------------------------------------------------------- |
+| **Menu matrix**     | Interactive scatter plot of popularity × profitability with quadrant shading |
+| **Recommendations** | Prioritized AI actions with projected monthly dollar impact                  |
+| **Insights**        | Bundle opportunities, cannibalization detection, and demand forecasting      |
+| **Trends**          | Revenue, margin, and classification movement over time                       |
+| **Data**            | Menu items, food costs, sync history, and manual sync                        |
+| **Settings**        | Restaurant profile, Square connection, and billing                           |
+
+<ProcessFlow
+  accent="#5D3EFB"
+  caption="From sign-up to actionable menu engineering: load sales data, classify every item on the popularity × profitability matrix, and act on dollar-impact recommendations. Square sync currently runs against the sandbox environment."
+  steps={[
+  { title: "Create your account", description: "Verify your email and enter the onboarding wizard." },
+  { title: "Bring your data", description: "Connect Square, import CSV/Excel sales history, or load sample data." },
+  { title: "Review items and costs", description: "Fix category mismatches and enter food costs to drive contribution margins." },
+  { title: "Run your first analysis", description: "Classify every item as Star, Crowd Pleaser, Hidden Gem, or Leftover." },
+  { title: "Act on recommendations", description: "Accept or dismiss prioritized actions with projected monthly dollar impact." },
+]}
+/>
+
+## Next steps
+
+<Cards>
+  <Card icon={<Target />} title="Menu matrix" href="/menuwright/menu-matrix">
+    Understand the Kasavana–Smith method behind every classification.
+  </Card>
+
+  <Card icon={<Plug />} title="Square connection" href="/menuwright/square">
+    Sync your catalog and sales automatically.
+  </Card>
+
+  <Card icon={<FileText />} title="CSV import" href="/menuwright/csv-import">
+    Work without a POS using spreadsheet uploads.
+  </Card>
+
+  <Card icon={<Settings />} title="Billing and usage" href="/menuwright/billing">
+    Free and Pro limits, overage, and plan management.
+  </Card>
+</Cards>

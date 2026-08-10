@@ -1,0 +1,77 @@
+---
+title: MenuWright
+description: AI menu engineering for independent restaurants — profitability and popularity classification, dollar-impact recommendations, and POS or CSV ingestion.
+---
+
+import { Calculator, Database, DollarSign, LineChart, ShieldCheck, Sparkles, Target, UtensilsCrossed, Workflow } from 'lucide-react';
+
+<ProductPreview
+  src="/screenshots/menuwright.png"
+  alt="MenuWright landing page with the menu-matrix dashboard: classify every item by profitability and popularity, then act on the AI recommendations"
+  accent="#5D3EFB"
+  caption="MenuWright classifies every item on the profitability × popularity matrix and turns the result into dollar-impact actions."
+  highlights={[
+    { text: "Classify every item on the classic profitability × popularity matrix.", icon: Target },
+    { text: "AI recommendations with projected monthly dollar impact.", icon: Sparkles },
+    { text: "Connect Square or import CSV/Excel sales history.", icon: Database },
+    { text: "Weekly email digests and monthly PDF deep dives.", icon: LineChart },
+  ]}
+/>
+
+<Callout>
+  MenuWright is in active development. Square is connected in **sandbox mode** while production app review is pending — see [the Square guide](/menuwright/square).
+</Callout>
+
+<Cards>
+  <Card icon={<Workflow />} title="Get started" href="/menuwright/getting-started">
+    Sign up, bring your menu and sales data, and run your first analysis.
+  </Card>
+  <Card icon={<Calculator />} title="Menu matrix" href="/menuwright/menu-matrix">
+    Learn the Kasavana–Smith method and the four-quadrant classification.
+  </Card>
+  <Card icon={<UtensilsCrossed />} title="Square connection" href="/menuwright/square">
+    Connect your Square account and sync catalog and sales automatically.
+  </Card>
+  <Card icon={<Database />} title="CSV import" href="/menuwright/csv-import">
+    Import sales history and food costs without a POS.
+  </Card>
+  <Card icon={<DollarSign />} title="Billing and usage" href="/menuwright/billing">
+    Free and Pro plans, usage limits, and overage pricing.
+  </Card>
+  <Card icon={<LineChart />} title="Reports" href="/menuwright/reports">
+    Weekly email digests and monthly PDF deep dives.
+  </Card>
+</Cards>
+
+## The decision path
+
+<ProcessFlow
+  accent="#5D3EFB"
+  caption="Sales and cost data feed a menu engineering matrix; AI turns the matrix into prioritized, dollar-quantified actions."
+  steps={[
+    { title: "Bring your data", description: "Connect Square or import sales and food costs as CSV/Excel." },
+    { title: "Classify the menu", description: "Every item is scored on profitability and popularity and placed in a quadrant." },
+    { title: "Get recommendations", description: "AI suggests reprice, promote, bundle, or cut actions with projected monthly impact." },
+    { title: "Act and track", description: "Apply the changes, then watch the next analysis reflect the impact." },
+  ]}
+/>
+
+## What MenuWright is for
+
+Independent restaurants run on tight margins, and most menu decisions are guesses. MenuWright turns the sales and cost data a restaurant already has into a clear answer: which items to protect, promote, reprice, or cut — and roughly how many dollars each move is worth.
+
+It is built for the owner or operator who wants an opinionated next action, not another dashboard to interpret. Every recommendation names the item, the action, and the projected impact.
+
+## FAQ
+
+<Accordions>
+  <Accordion title="Do I need a POS system?">
+    No. Connect Square for automatic catalog and sales sync, or import your menu and sales history as CSV/Excel. A sample-data mode lets you explore the workflow without any data.
+  </Accordion>
+  <Accordion title="What if I don't have food costs?">
+    MenuWright still works — it classifies by popularity and revenue. Once items have food costs, it unlocks true contribution margins and the full profit-based matrix.
+  </Accordion>
+  <Accordion title="Where does my data live?">
+    Every record is scoped to your restaurant, and Square credentials are encrypted at rest. See the [FAQ](/menuwright/faq) for the data boundaries.
+  </Accordion>
+</Accordions>

@@ -1,0 +1,64 @@
+---
+title: "Connect Square"
+description: "Sync your Square catalog and sales history into MenuWright with OAuth, encrypted token storage, and daily refresh."
+---
+
+Connecting Square is the fastest way to bring a real menu and sales history into MenuWright. The connection is strictly read-only: MenuWright never writes to your Square account.
+
+<Warning>
+  MenuWright's Square integration currently runs against the **sandbox environment** while the production app is under review. Real-restaurant onboarding is not available until Square approves the production app.
+</Warning>
+
+## What you get
+
+| Capability | Detail |
+|---|---|
+| **Catalog sync** | Menu items, categories, variations, and prices, mapped into MenuWright's item model |
+| **Sales sync** | Itemized order history, aggregated into daily sales records for the analysis window |
+| **Initial sync** | On first connection: full catalog plus ~90 days of orders, followed by an analysis trigger |
+| **Ongoing sync** | Daily background sync keeps catalog and sales current |
+
+## The connection flow
+
+1. From onboarding or **Settings → Data**, choose **Connect Square**.
+2. MenuWright redirects you to Square's authorization page.
+3. You authorize read access to the seller's catalog and order history.
+4. Square redirects back; MenuWright exchanges the code and stores the tokens.
+5. The initial sync starts in the background — the onboarding review step polls for the arriving items.
+
+The exchange runs under your signed-in session, so connected tokens always bind to **your** restaurant — never to whoever initiated the authorization URL. The OAuth state is a signed, short-lived token bound to your tenant, and a mismatched state is rejected.
+
+## How tokens are handled
+
+- Tokens are **encrypted at rest** (Fernet) before they touch the database.
+- Access tokens are refreshed automatically when they expire.
+- Disconnecting from **Settings → Data** deletes the stored credentials immediately.
+
+## The sync contract
+
+| Item | Detail |
+|---|---|
+| **Menu items** | Fetched from the Square Catalog API, including categories (resolved via the catalog's category objects) |
+| **Sales** | Fetched from the Square Orders API and normalized into daily `SalesRecord` rows |
+| **Schedule** | Daily sync via Celery beat at 04:00 UTC |
+| **Sync history** | Every import is logged with source, records imported, and status |
+
+## Limitations
+
+- **Sandbox-only today.** Production Square app review is the long pole for real restaurants; the OAuth flow itself is implemented and tested against sandbox.
+- **Read-only.** MenuWright syncs catalog and sales aggregates; it never modifies your Square data.
+- **One location model.** The adapter is built for a single merchant's catalog and orders today.
+
+## Related
+
+<Cards>
+  <Card title="CSV import" icon="file-text" href="/menuwright/csv-import">
+    Bring sales history in without a POS.
+  </Card>
+  <Card title="Getting started" icon="rocket" href="/menuwright/getting-started">
+    The full onboarding path, including the review and food-cost steps.
+  </Card>
+  <Card title="FAQ" icon="life-buoy" href="/menuwright/faq">
+    POS scope, data boundaries, and future adapters.
+  </Card>
+</Cards>

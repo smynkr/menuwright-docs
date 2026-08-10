@@ -1,0 +1,79 @@
+---
+title: Menu matrix methodology
+description: How MenuWright classifies every menu item on profitability and
+  popularity using the Kasavana–Smith menu engineering method.
+---
+
+import { FileText, Rocket, Settings } from 'lucide-react';
+
+The menu matrix is MenuWright's core model. Every menu item is scored on two axes — **popularity** (menu mix) and **profitability** (contribution margin) — then placed in one of four quadrants. The method follows the classic Kasavana–Smith menu engineering approach (1982), the industry-standard way to classify items by what they earn and how often they sell.
+
+## The two axes
+
+**Popularity — menu mix percentage**
+
+```
+menu mix % = item quantity sold / total quantity sold
+```
+
+**Profitability — contribution margin**
+
+```
+contribution margin = menu price − food cost
+```
+
+## The thresholds
+
+An item is "high" on an axis when it clears that axis's threshold:
+
+| Axis              | Threshold                                                                                                                                                              |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Popularity**    | `1 / N × 0.70` — the average share an item would have if sales were perfectly even, discounted by the standard 70% adjustment. `N` is the number of active menu items. |
+| **Profitability** | The **weighted average contribution margin** across all items, weighted by quantity sold.                                                                              |
+
+Values are rounded to cents (0.01). An item at or above the threshold counts as high.
+
+## The four quadrants
+
+|                 | High popularity                                                                                        | Low popularity                                                      |
+| --------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
+| **High profit** | **Star** — protect it: keep quality consistent, give it prime placement, don't discount.               | **Hidden Gem** — promote it: better placement, rename, or a bundle. |
+| **Low profit**  | **Crowd Pleaser** — reprice it: raise price or trim portion cost. It sells well but earns thin margin. | **Leftover** — cut or reinvent it: low sales, low margin.           |
+
+These are MenuWright's current product labels. The classic literature calls the same quadrants Star, Plowhorse, Puzzle, and Dog; the product renamed them to be self-explanatory to restaurant owners.
+
+## Revenue-only fallback
+
+When **any** item lacks food cost data, MenuWright falls back to a one-dimensional analysis using revenue contribution and sales volume. This still identifies bestsellers and underperformers, but it cannot place items in the full four-quadrant matrix — true contribution margins require food costs.
+
+The moment every item has a food cost, the full profit-based matrix unlocks.
+
+## Analysis snapshots
+
+Every analysis run writes an immutable `MenuAnalysis` snapshot with per-item results. Snapshots let you:
+
+- Track how classifications change between periods — was that item always a Leftover, or did it use to be a Star?
+- Measure the realized impact of accepted recommendations against projections
+- Compare trends month over month
+
+## What happens after classification
+
+Classification is only the first half. After a run, MenuWright's AI layer reviews the matrix and produces specific, prioritized recommendations — reprice, promote, bundle, or cut — each with a projected monthly dollar impact where one can be estimated. Recommendations attach to the analysis snapshot and appear in the dashboard's Recommendations feed.
+
+The AI generates candidates; you decide what to act on.
+
+## Related
+
+<Cards>
+  <Card icon={<Rocket />} title="Get started" href="/menuwright/getting-started">
+    Run your first analysis.
+  </Card>
+
+  <Card icon={<FileText />} title="CSV import" href="/menuwright/csv-import">
+    Bring food costs and sales data in from a spreadsheet.
+  </Card>
+
+  <Card icon={<Settings />} title="Billing and usage" href="/menuwright/billing">
+    How many analyses and recommendation sets each plan includes.
+  </Card>
+</Cards>

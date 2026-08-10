@@ -1,0 +1,111 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Axiomancer Labs",
+  "description": "MenuWright documentation \u2014 AI menu engineering for independent restaurants.",
+  "colors": {
+    "primary": "#00D4FF",
+    "light": "#5DE5FF",
+    "dark": "#0099BF"
+  },
+  "favicon": "/images/favicon.svg",
+  "logo": {
+    "light": "/images/logo-light.svg",
+    "dark": "/images/logo-dark.svg",
+    "href": "https://axiomancer.io"
+  },
+  "navigation": {
+    "products": [
+      {
+        "product": "MenuWright",
+        "description": "AI menu engineering for independent restaurants.",
+        "icon": "utensils",
+        "tabs": [
+          {
+            "tab": "Documentation",
+            "groups": [
+              {
+                "group": "Get started",
+                "icon": "rocket",
+                "pages": [
+                  "menuwright/index",
+                  "menuwright/getting-started"
+                ]
+              },
+              {
+                "group": "Methodology",
+                "icon": "target",
+                "pages": [
+                  "menuwright/menu-matrix"
+                ]
+              },
+              {
+                "group": "Integrations",
+                "icon": "plug",
+                "pages": [
+                  "menuwright/square",
+                  "menuwright/csv-import"
+                ]
+              },
+              {
+                "group": "Account",
+                "icon": "settings",
+                "pages": [
+                  "menuwright/billing"
+                ]
+              },
+              {
+                "group": "Operations",
+                "icon": "chart-line",
+                "pages": [
+                  "menuwright/reports"
+                ]
+              },
+              {
+                "group": "Reference",
+                "icon": "life-buoy",
+                "pages": [
+                  "menuwright/faq"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "global": {
+      "anchors": []
+    }
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "MenuWright",
+        "href": "https://menuwright.com"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Sign in",
+      "href": "https://app.axiomlayer.io"
+    }
+  },
+  "footer": {
+    "socials": {
+      "x": "https://x.com/axiomancer",
+      "github": "https://github.com/smynkr",
+      "linkedin": "https://www.linkedin.com/company/axiomancer"
+    }
+  },
+  "seo": {
+    "indexing": "navigable"
+  },
+  "integrations": {
+    "intercom": {
+      "appId": "okr3tqrw"
+    }
+  },
+  "interaction": {
+    "drilldown": true
+  }
+}

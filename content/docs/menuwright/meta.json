@@ -1,0 +1,22 @@
+{
+  "title": "MenuWright",
+  "root": true,
+  "icon": "UtensilsCrossed",
+  "description": "AI menu engineering for independent restaurants — matrix analysis, dollar-impact recommendations, and POS or CSV ingestion.",
+  "pages": [
+    "---[Rocket]Get started---",
+    "index",
+    "getting-started",
+    "---[Target]Methodology---",
+    "menu-matrix",
+    "---[Plug]Integrations---",
+    "square",
+    "csv-import",
+    "---[Settings]Account---",
+    "billing",
+    "---[ChartLine]Operations---",
+    "reports",
+    "---[LifeBuoy]Reference---",
+    "faq"
+  ]
+}

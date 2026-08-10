@@ -1,0 +1,63 @@
+---
+title: "CSV and Excel import"
+description: "Import sales history and food costs into MenuWright from CSV or Excel — the no-POS path."
+---
+
+MenuWright works without a POS. Upload sales history and food costs from a spreadsheet, and the analysis pipeline runs on the same normalized data a Square connection would produce.
+
+## Sales import
+
+Upload a **CSV** (UTF-8, or Excel's "CSV UTF-8" export — the BOM is handled automatically) or **.xlsx** file with these columns:
+
+| Column | Required | Notes |
+|---|---|---|
+| `item_name` | ✓ | Matches existing menu items (case-insensitive, trimmed) |
+| `date` | ✓ | ISO date, e.g. `2026-07-01` |
+| `quantity_sold` | ✓ | Integer, zero or positive |
+| `gross_revenue` | ✓ | Finite, non-negative number (e.g. `125.50`) |
+
+The import is **all-or-nothing**: a bad row fails the whole file with a clean error, never a partial silent load. Validation covers:
+
+- Missing, duplicate, or mis-normalized headers
+- Rows with more fields than the header (stray commas, missing quotes)
+- Non-finite or negative revenue, sub-cent values (rounded to cents first)
+- Quantities that are negative or beyond the supported integer range
+- Item names longer than 255 characters
+
+## Creating items from sales
+
+Fresh tenants often arrive with sales data but no menu yet. Pass `create_missing_items=true` on the import and unmatched item names are created automatically, with the menu price **derived from average revenue per unit sold** (food cost stays unknown until entered). Soft-deleted items with the same name are restored instead of duplicated.
+
+## Food cost import
+
+Upload a file with `item_name` and `food_cost` columns (aliases like `name`, `item`, `cost`, or `food cost` are accepted; headers are normalized). Rows without a usable cost are dropped.
+
+Food costs unlock the full profit-based matrix — see the [menu matrix guide](/menuwright/menu-matrix) for what changes.
+
+## Excel specifics
+
+- `parse_sales_excel` normalizes Excel files into the same row shape as CSV, so validation is shared.
+- Corrupt or truncated workbooks fail as a clean 400; schema problems (duplicate headers, multiple sheets) fail as a 422.
+- Timestamp cells and float-promoted columns are normalized.
+
+## File size
+
+Uploads are capped at a fixed ceiling and enforced in chunks, so oversized files fail fast with a clear error instead of exhausting memory.
+
+## Sync history
+
+Every import writes a `POSSyncLog` row with source (`square`, `csv`, `excel`), records imported, and status — so you always know where your data came from.
+
+## Related
+
+<Cards>
+  <Card title="Menu matrix" icon="target" href="/menuwright/menu-matrix">
+    How the imported data becomes classifications.
+  </Card>
+  <Card title="Square connection" icon="plug" href="/menuwright/square">
+    The automatic alternative to CSV import.
+  </Card>
+  <Card title="Getting started" icon="rocket" href="/menuwright/getting-started">
+    The full onboarding path.
+  </Card>
+</Cards>

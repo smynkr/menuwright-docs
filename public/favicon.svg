@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="MenuWright">
+  <rect width="64" height="64" rx="14" fill="#171232"/>
+  <g transform="translate(32 32) scale(0.8)">
+    <circle cx="0" cy="0" r="25.5" stroke="#5D3EFB" stroke-opacity="0.9" stroke-width="3.8" />
+    <g stroke="#5D3EFB" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round">
+      <g transform="translate(-1 1) rotate(-38)">
+        <path d="M-8 -20 L-8 -6 M-3 -20 L-3 -6 M3 -20 L3 -6 M8 -20 L8 -6" />
+        <path d="M-9.5 -6 L9.5 -6" />
+        <path d="M0 -6 L0 1.5" stroke-linecap="butt" />
+        <path d="M0 4.5 L0 19" stroke-linecap="butt" />
+      </g>
+      <g transform="translate(1 -1) rotate(38)">
+        <path d="M0 -20 C-5.5 -14.5 -5.5 -7.5 0 -3 Z" fill="#5D3EFB" stroke="none" />
+        <path d="M0 -3 L0 19" stroke-linecap="butt" />
+      </g>
+    </g>
+  </g>
+  <rect x="0.75" y="0.75" width="62.5" height="62.5" rx="13.25" stroke="#5D3EFB" stroke-opacity="0.35" stroke-width="1.5"/>
+</svg>
