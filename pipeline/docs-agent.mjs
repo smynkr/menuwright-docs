@@ -127,8 +127,9 @@ function parseArgs(argv) {
     pr: null,
     range: null,
     docsRepo: process.env.DOCS_AGENT_DOCS_REPO || null,
-    docsRepoPath: process.env.DOCS_AGENT_DOCS_PATH || "./menuwright-docs",
+    docsRepoPath: process.env.DOCS_AGENT_DOCS_PATH || "./tiletactician-docs",
     product: null,
+    standalone: false,
     backend: process.env.DOCS_AGENT_BACKEND || "claude",
     draft: true,
     dryRun: false,
@@ -150,6 +151,7 @@ function parseArgs(argv) {
       case "--docs-repo": out.docsRepo = next(); break;
       case "--docs-repo-path": out.docsRepoPath = next(); break;
       case "--product": out.product = next(); break;
+      case "--standalone": out.standalone = true; break;
       case "--backend": out.backend = next(); break;
       case "--no-draft": out.draft = false; break;
       case "--dry-run": out.dryRun = true; break;
@@ -179,9 +181,12 @@ Required:
                                  (or) --range <baseSha>..<headSha>  commit range instead
   --docs-repo <owner/name>      Target docs repo (or env DOCS_AGENT_DOCS_REPO)
   --product <layer|overwatch|locus|routeshift|codex|invest>
+                 Product whose pages may change (any name with --standalone)
+  --standalone   Single-product docs repo: product root is the SITE root
+                 (flat *.mdx at repo root, allowlist **/*.mdx + docs.json)
 
 Optional:
-  --docs-repo-path <path>       Local checkout of the docs repo (default ./menuwright-docs,
+  --docs-repo-path <path>       Local checkout of the docs repo (default ./tiletactician-docs,
                                  or env DOCS_AGENT_DOCS_PATH). Must already exist, be a
                                  git repo, have a remote, and be gh-authenticated.
   --backend <claude|codex|gemini|glm>  Default: env DOCS_AGENT_BACKEND, else "claude".
@@ -440,25 +445,40 @@ function splitIdentifier(s) {
     .filter(Boolean);
 }
 
-function walkMdx(dir) {
+function walkMdx(dir, { excludeDirs } = {}) {
   const results = [];
   if (!existsSync(dir)) return results;
   for (const entry of readdirSync(dir)) {
     const full = path.join(dir, entry);
     const st = statSync(full);
-    if (st.isDirectory()) results.push(...walkMdx(full));
+    if (st.isDirectory()) {
+      if (excludeDirs && excludeDirs.has(entry)) continue;
+      results.push(...walkMdx(full, { excludeDirs }));
+    }
     else if (entry.endsWith(".mdx")) results.push(full);
   }
   return results;
 }
 
-function findCandidateDocsPages(docsRepoPath, product, keywords, maxPages) {
+// Directories that are structural or generated in a standalone docs repo.
+// The canonical authoring surface is the flat *.mdx at the repo root; these
+// are never candidates and never writable by the backend.
+const STANDALONE_EXCLUDE_DIRS = new Set([
+  '.agents', '.codex', '.git', '.github', '.omo', '.playwright-mcp',
+  '_migration', 'app', 'components', 'content', 'docs', 'lib', 'node_modules',
+  'pipeline', 'public', 'scripts',
+]);
+
+function findCandidateDocsPages(docsRepoPath, product, keywords, maxPages, standalone) {
   // The CANONICAL authoring surface is the flat <product>/ source tree at the
-  // repo root. content/docs/ is generated output (run-migration.mjs rebuilds
-  // it and would silently revert any draft written there), so docs-agent
-  // reads and writes the flat sources and regenerates on the way out.
-  const productDir = path.join(docsRepoPath, product);
-  const pages = walkMdx(productDir);
+  // repo root (or the site root itself with --standalone). content/docs/ is
+  // generated output (run-migration.mjs rebuilds it and would silently revert
+  // any draft written there), so docs-agent reads and writes the flat sources
+  // and regenerates on the way out.
+  // With --standalone the site root IS the product root: flat *.mdx at the
+  // repo root, generated/structural directories excluded from candidates.
+  const productDir = standalone ? docsRepoPath : path.join(docsRepoPath, product);
+  const pages = walkMdx(productDir, { excludeDirs: standalone ? STANDALONE_EXCLUDE_DIRS : null });
   const scored = pages.map((p) => {
     const content = readFileSync(p, "utf8").toLowerCase();
     let score = 0;
@@ -482,7 +502,7 @@ function findCandidateDocsPages(docsRepoPath, product, keywords, maxPages) {
 // Step 3: build the prompt
 // ---------------------------------------------------------------------------
 
-function buildPrompt({ prMeta, filteredDiff, droppedPaths, oversizedPaths, candidatePages, docsRepoPath }) {
+function buildPrompt({ prMeta, filteredDiff, droppedPaths, oversizedPaths, candidatePages, docsRepoPath, standalone, product }) {
   const pagesSection = candidatePages
     .map((p) => {
       const rel = path.relative(docsRepoPath, p);
@@ -491,9 +511,29 @@ function buildPrompt({ prMeta, filteredDiff, droppedPaths, oversizedPaths, candi
     })
     .join("\n\n");
 
-  return `You are drafting a documentation update for the Axiom docs site — a Fumadocs
-site authored as flat Mintlify-flavored MDX source files at the docs-repo root
-(one directory per product). Treat MDX syntax as portable prose + the small
+  // Standalone docs repos (docs.<product>.com) author flat MDX at the site
+  // root; the multi-product Axiom docs site nests one directory per product.
+  // The standalone site name is the product's brand name (--product is the
+  // lowercase form), not the Axiom identity.
+  const STANDALONE_SITE_NAMES = {
+    menuwright: 'MenuWright',
+    infolitico: 'Infolitico',
+    dontdiefishing: 'DontDieFishing',
+    tiletactician: 'TileTactician',
+  };
+  const siteName = standalone
+    ? (STANDALONE_SITE_NAMES[product] || product.charAt(0).toUpperCase() + product.slice(1))
+    : 'Axiom';
+  const sourceShape = standalone
+    ? "authored as flat Mintlify-flavored MDX source files at the docs-repo root (the site root)"
+    : "authored as flat Mintlify-flavored MDX source files at the docs-repo root (one directory per product)";
+  const examplePath = standalone ? "getting-started.mdx" : "layer/integrations/aws.mdx";
+  const canonicalRule = standalone
+    ? "paths like `<page>.mdx` at the repo root. NEVER emit paths under `content/docs/`"
+    : "paths like `<product>/page.mdx` or `<product>/section/page.mdx` at the repo root. NEVER emit paths under `content/docs/`";
+
+  return `You are drafting a documentation update for the ${siteName} docs site — a Fumadocs
+site ${sourceShape}. Treat MDX syntax as portable prose + the small
 component set already used in these pages: Note, Tip, Warning, Card, Accordion,
 AccordionGroup, Steps, Step, Columns, CodeGroup, Update.
 
@@ -520,14 +560,13 @@ ${pagesSection || "(no candidate pages found under this product's source directo
 ## Output contract — follow this EXACTLY, nothing else in your response
 For each file you want to create or update, emit exactly one block:
 
-===FILE: <path relative to the docs repo root, e.g. layer/integrations/aws.mdx>===
+===FILE: <path relative to the docs repo root, e.g. ${examplePath}>===
 <the FULL new file content, complete MDX including frontmatter>
 ===END===
 
 Rules:
-- Edit the CANONICAL FLAT SOURCES only: paths like \`<product>/page.mdx\` or
-  \`<product>/section/page.mdx\` at the repo root. NEVER emit paths under
-  \`content/docs/\` — that tree is generated output and is rebuilt from the
+- Edit the CANONICAL FLAT SOURCES only: ${canonicalRule}
+  — that tree is generated output and is rebuilt from the
   flat sources by the pipeline after your files are written.
 - The only non-MDX file you may emit is \`docs.json\` (the navigation source of
   truth), and only when you ADD a brand-new page: add the new page's path to
@@ -776,7 +815,7 @@ async function invokeBackendWithBabysitting(backendName, prompt, timeoutMs) {
 // Step 5: parse the output contract
 // ---------------------------------------------------------------------------
 
-function parseFileBlocks(output, product) {
+function parseFileBlocks(output, product, standalone) {
   const blocks = [];
   let m;
   FILE_BLOCK_RE.lastIndex = 0;
@@ -787,31 +826,40 @@ function parseFileBlocks(output, product) {
       fail(`Backend emitted a disallowed file path: ${relPath} (absolute paths and ".." are rejected)`);
     }
     // Legacy compatibility: older prompts targeted the generated tree. Remap
-    // content/docs/<this product>/... back onto the canonical flat source so a
-    // model still emitting generated paths produces a durable edit instead of
-    // a write that the next regeneration would revert.
+    // content/docs/<...>/... back onto the canonical flat source so a model
+    // still emitting generated paths produces a durable edit instead of a
+    // write that the next regeneration would revert. In the multi-product
+    // repo the generated path keeps its product segment
+    // (content/docs/<product>/page.mdx -> <product>/page.mdx); in a standalone
+    // repo the generated path drops the tree prefix entirely
+    // (content/docs/page.mdx -> page.mdx).
     if (relPath.startsWith("content/docs/")) {
       const rest = relPath.slice("content/docs/".length);
-      if (rest.startsWith(`${product}/`) && rest.endsWith(".mdx")) {
-        const remapped = rest;
-        log(`remapping generated path "${relPath}" to canonical flat source "${remapped}"`);
-        relPath = remapped;
+      const remappable = standalone
+        ? rest.endsWith(".mdx")
+        : rest.startsWith(`${product}/`) && rest.endsWith(".mdx");
+      if (remappable) {
+        log(`remapping generated path "${relPath}" to canonical flat source "${rest}"`);
+        relPath = rest;
       } else {
         fail(
           `Backend emitted a disallowed file path in the generated tree that cannot be remapped ` +
-          `to this product's canonical sources: ${relPath} (allowed: ${product}/**/*.mdx and docs.json)`
+          `to this product's canonical sources: ${relPath} (allowed: ${standalone ? "**/*.mdx" : `${product}/**/*.mdx`} and docs.json)`
         );
       }
     }
-    // Allowlist: this product's flat MDX sources, plus docs.json (navigation)
-    // when a new page requires an entry. Everything else — other products,
-    // meta.json (generated), app code, configs — is rejected fail-closed.
-    const isOwnProductMdx = relPath.startsWith(`${product}/`) && relPath.endsWith(".mdx");
+    // Allowlist: this product's flat MDX sources (the site root itself with
+    // --standalone), plus docs.json (navigation) when a new page requires an
+    // entry. Everything else — generated trees, app code, configs — is
+    // rejected fail-closed.
+    const isOwnProductMdx = standalone
+      ? relPath.endsWith(".mdx") && !STANDALONE_EXCLUDE_DIRS.has(relPath.split("/")[0])
+      : relPath.startsWith(`${product}/`) && relPath.endsWith(".mdx");
     const isDocsJson = relPath === "docs.json";
     if (!isOwnProductMdx && !isDocsJson) {
       fail(
         `Backend emitted a disallowed file path: ${relPath} ` +
-        `(allowed: ${product}/**/*.mdx and docs.json — the canonical flat sources)`
+        `(allowed: ${standalone ? "**/*.mdx at the repo root" : `${product}/**/*.mdx`} and docs.json — the canonical flat sources)`
       );
     }
     blocks.push({ relPath, content: m[2] });
@@ -1228,7 +1276,7 @@ async function main() {
   if (!opts.pr && !opts.range) fail("one of --pr or --range is required");
   if (!opts.docsRepo) fail("--docs-repo is required (or set DOCS_AGENT_DOCS_REPO)");
   if (!opts.product) fail("--product is required");
-  if (!PRODUCTS.includes(opts.product)) {
+  if (!opts.standalone && !PRODUCTS.includes(opts.product)) {
     fail(`--product must be one of: ${PRODUCTS.join(", ")} (got "${opts.product}")`);
   }
   if (!BACKENDS[opts.backend]) {
@@ -1276,10 +1324,10 @@ async function main() {
   }
 
   const keywords = extractKeywords(filteredDiff, keptPaths);
-  const candidatePages = findCandidateDocsPages(opts.docsRepoPath, opts.product, keywords, opts.maxPages);
+  const candidatePages = findCandidateDocsPages(opts.docsRepoPath, opts.product, keywords, opts.maxPages, opts.standalone);
   log(`candidate docs pages: ${candidatePages.map((p) => path.relative(opts.docsRepoPath, p)).join(", ") || "(none found)"}`);
 
-  const prompt = buildPrompt({ prMeta, filteredDiff, droppedPaths, oversizedPaths, candidatePages, docsRepoPath: opts.docsRepoPath });
+  const prompt = buildPrompt({ prMeta, filteredDiff, droppedPaths, oversizedPaths, candidatePages, docsRepoPath: opts.docsRepoPath, standalone: opts.standalone, product: opts.product });
 
   // Persist the prompt + raw output for debugging — especially important in
   // hosted CI where you can't just re-run interactively to see what happened.
@@ -1296,7 +1344,7 @@ async function main() {
   const rawOutput = await invokeBackendWithBabysitting(opts.backend, prompt, opts.timeoutMs);
   writeFileSync(path.join(logDir, `${runId}-output.txt`), rawOutput, "utf8");
 
-  const fileBlocks = parseFileBlocks(rawOutput, opts.product);
+  const fileBlocks = parseFileBlocks(rawOutput, opts.product, opts.standalone);
   // Fail-closed no-op contract: zero FILE blocks is a legitimate no-op ONLY
   // when the model emitted the explicit ===NO-DOC-CHANGE=== sentinel (and no
   // stray ===FILE fragments). Fuzzy phrase-matching was rejected in review —
