@@ -50,14 +50,13 @@ The moment every item has a food cost, the full profit-based matrix unlocks.
 Every analysis run writes an immutable `MenuAnalysis` snapshot with per-item results. Snapshots let you:
 
 - Track how classifications change between periods — was that item always a Leftover, or did it use to be a Star?
-- Measure the realized impact of accepted recommendations against projections
 - Compare trends month over month
 
 ## What happens after classification
 
 Classification is only the first half. After a run, MenuWright's AI layer reviews the matrix and produces specific, prioritized recommendations — reprice, promote, bundle, or cut — each with a projected monthly dollar impact where one can be estimated. Recommendations attach to the analysis snapshot and appear in the dashboard's Recommendations feed.
 
-The AI generates candidates; you decide what to act on.
+The AI generates candidates; you decide what to act on. When you accept a recommendation, MenuWright anchors a closed-loop measurement: it compares the item's average daily revenue in matched calendar windows before and after the action day and, once both windows have at least 7 days of recorded sales, displays the observed revenue change alongside the original projection. This is an honest before/after comparison, not an attributable impact — see the [FAQ](/menuwright/faq) for the full explanation.
 
 ## Related
 

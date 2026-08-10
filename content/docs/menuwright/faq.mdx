@@ -20,6 +20,18 @@ MenuWright still works — it classifies by popularity and revenue. Once items h
 
 MenuWright analyzes your menu matrix and sales data and produces specific, prioritized recommendations — reprice, promote, bundle, or cut — with a projected monthly dollar impact where one can be estimated. The AI layer uses an OpenAI-compatible interface to a primary and fallback provider; generation is a candidate step, and you decide what to act on. Recommendations fail gracefully: if the provider is unreachable, the analysis completes without recommendations rather than blocking.
 
+## What is the "observed revenue change" on accepted recommendations?
+
+When you accept a recommendation, MenuWright anchors a closed-loop measurement: it compares the item's average daily revenue in matched calendar windows before and after the action day (the action day itself is excluded). Once both windows have at least 7 days with recorded sales, the recommendation card shows an **observed revenue change** alongside the original projection — for example, "+$380/mo observed" next to "+$410/mo projected."
+
+The windows are matched in length — a week after acting compares 7 days before against 7 days after, growing up to 30 days — so weekday-mix bias doesn't skew the comparison. Averages divide by the calendar span, not by the number of days with records, so sparse sellers aren't inflated.
+
+<Callout>
+  This is an observed before/after revenue change, <strong>not</strong> an attributable impact. An uncontrolled comparison on a single item cannot separate the recommendation's effect from a concurrent price change, promotion, or seasonal shift. The label says "observed revenue change" deliberately.
+</Callout>
+
+The number only appears when the data honestly supports it — if either window has fewer than 7 days with recorded sales, no figure is shown rather than a fabricated one. Negative deltas are included honestly.
+
 ## Is my restaurant's data secure?
 
 Every record is scoped to your restaurant, and Square credentials are encrypted at rest. Tokens are deleted if you disconnect. The connection is read-only — MenuWright never modifies your Square data. See the [privacy policy](https://menuwright.com/privacy).
@@ -54,4 +66,4 @@ Never. The integration is strictly read-only: catalog and sales aggregates only.
 
 ## What's on the roadmap?
 
-Toast and Clover adapters, consultant multi-restaurant mode, and an impact tracker are the headline directions — not yet available.
+Toast and Clover adapters and consultant multi-restaurant mode are the headline directions — not yet available.
