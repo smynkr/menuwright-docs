@@ -58,6 +58,28 @@ Classification is only the first half. After a run, MenuWright's AI layer review
 
 The AI generates candidates; you decide what to act on. When you accept a recommendation, MenuWright anchors a closed-loop measurement: it compares the item's average daily revenue in matched calendar windows before and after the action day and, once both windows have at least 7 days of recorded sales, displays the observed revenue change alongside the original projection. This is an honest before/after comparison, not an attributable impact — see the [FAQ](/menuwright/faq) for the full explanation.
 
+## What-if pricing simulator
+
+The dashboard's **Simulate Prices** button opens a modal where you can change any item's price and instantly preview how the matrix would shift — before you commit a single change to your menu.
+
+The simulator re-runs the Kasavana–Smith engine with your proposed prices against the **latest completed analysis's volumes** and the items' **current prices and costs**. For each item you reprice, it shows:
+
+- Old and new classification, with a badge when the item flips quadrants
+- Monthly contribution delta (`quantity × (new CM − old CM)`) and revenue delta
+- Menu-level totals for monthly contribution and revenue
+
+<Note>
+  The simulator answers "what happens if I reprice this item <strong>now</strong>?" — it uses current prices and costs, not the prices in effect when the analysis ran. Volumes stay fixed at the last analysis; the tool shows margin mechanics, not demand response to a price change.
+</Note>
+
+<Tip>
+  The simulator is pure compute — no AI calls, no quota consumption, no database writes until you choose to apply. It's available on every plan, including Free. When you're happy with a projection, <strong>Apply prices to menu</strong> persists the previewed overrides directly to your menu items; run a new analysis to see the updated matrix.
+</Tip>
+
+Items added after the last analysis appear in the table but are locked with a "not analyzed yet" note — run a new analysis to include them in the simulation. If you haven't run an analysis yet, the simulator prompts you to do so first.
+
+When food cost data is missing for some items, those rows show revenue impact only (contribution deltas are omitted), and a notice appears in the projection panel — the same revenue-only fallback described above.
+
 ## Related
 
 <Cards>

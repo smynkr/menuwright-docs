@@ -32,6 +32,10 @@ The windows are matched in length — a week after acting compares 7 days before
 
 The number only appears when the data honestly supports it — if either window has fewer than 7 days with recorded sales, no figure is shown rather than a fabricated one. Negative deltas are included honestly.
 
+## Can I test price changes before applying them?
+
+Yes. The dashboard's **Simulate Prices** button opens a what-if simulator: change any item's price and preview how the menu matrix and monthly contribution would shift before you commit. The simulator re-runs the Kasavana–Smith engine against the latest analysis's volumes and current prices/costs — pure compute, no writes, available on every plan. When you're happy with a projection, apply the prices directly to your menu. See the [menu matrix guide](/menuwright/menu-matrix) for details.
+
 ## Is my restaurant's data secure?
 
 Every record is scoped to your restaurant, and Square credentials are encrypted at rest. Tokens are revoked and deleted when you disconnect. The connection is read-only — MenuWright never modifies your Square data. See the [privacy policy](https://menuwright.com/privacy).
