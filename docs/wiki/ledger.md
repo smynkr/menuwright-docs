@@ -9,6 +9,29 @@ sources: [".codex/harness-memory.json", "README.md", "package.json", "next.confi
 
 # Durable ledger
 
+## 2026-08-11 — Dark-first MenuWright brand theme pass
+
+- fd theme tokens replaced the template cyan with the MenuWright purple
+  family: dark `#5D3EFB` on the `#0A0A0A` void, light `#3B1FD8` on paper
+  (AA-accessible), ring/accent/glow aligned, `.ax-glow` and constellation
+  recolored to purple, dead Axiom CSS utilities removed.
+- Dark is now the presentation default (`RootProvider theme={{ defaultTheme: 'dark' }}`).
+- docs.json identity: name MenuWright, brand colors, logo href to
+  menuwright.com.
+- OG card and 404 rebranded to the utensil mark and the menu voice; per-page
+  siteName fixed to MenuWright Docs.
+- Verified: gates green, dark default + toggle, OG render; deployed via PR #5.
+
+Re-establish with:
+
+```bash
+npm run test:links
+npm run links:check
+npm run types:check
+npm run build
+npm run memory:check
+```
+
 ## 2026-08-10 — Standalone MenuWright docs site established
 
 - Scoped from the axiom-docs Fumadocs stack as a single-product site:
