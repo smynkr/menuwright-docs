@@ -9,6 +9,25 @@ sources: [".codex/harness-memory.json", "README.md", "package.json", "next.confi
 
 # Durable ledger
 
+## 2026-08-11 — docs.json asset-path fix
+
+- `favicon` and `logo` in docs.json pointed at `/images/favicon.svg` and
+  `/images/logo-{light,dark}.svg`, which do not exist in `public/` (the nav
+  renders `/logo.svg` via NavTitle, so nothing was visibly broken).
+  Corrected to the real paths (`/favicon.svg`, `/logo.svg`), matching the
+  TileTactician reference.
+
+Re-establish with:
+
+```bash
+npm run memory:check
+npm run test:links
+npm run links:check
+npm run types:check
+npm run build
+```
+
+
 ## 2026-08-11 — Dark-first MenuWright brand theme pass
 
 - fd theme tokens replaced the template cyan with the MenuWright purple
