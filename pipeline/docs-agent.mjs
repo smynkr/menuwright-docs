@@ -1295,10 +1295,14 @@ function regenerateMemoryManifest(docsRepoPath) {
   }
   const res = runAllowFail("npm", ["run", "memory:generate"], { cwd: docsRepoPath });
   if (res.status !== 0) {
-    // The canary (memory:check) on the draft PR is the fail-closed backstop;
-    // don't abort the whole draft over a generator hiccup.
-    log(`memory:generate failed (exit ${res.status}) — the draft PR's memory gate will flag staleness.`);
-    return false;
+    // Fail closed: a PR whose canonical edits leave the memory manifests
+    // stale fails the docs repo's memory gate on arrival, so opening it just
+    // produces a known-broken draft. Abort with a retryable failure instead.
+    fail(
+      `memory:generate failed (exit ${res.status}) after canonical MDX edits - ` +
+        `refusing to open a draft whose memory manifests are stale. ` +
+        `Fix the generator and re-run.`,
+    );
   }
   return true;
 }
