@@ -137,7 +137,7 @@ html > body[data-scroll-locked] {
    <a href="#slug"> so the copy-anchor control has a target, which means the
    "links are the signal" rule above would paint every h1–h6 purple + underlined —
    an affordance lie (a heading that looks clickable) that also inverts
-   hierarchy, making an h2 shout louder than the white serif h1.    Cyan stays reserved for real, navigational links; a heading's own anchor
+   hierarchy, making an h2 shout louder than the white serif h1.    Purple stays reserved for real, navigational links; a heading's own anchor
    inherits the heading's ink (white in the void, near-black on paper) with no
    underline. Specificity is the load-bearing detail: the heading names sit
    inside :where(), which contributes ZERO specificity, but the `a` is a bare
@@ -154,7 +154,7 @@ html > body[data-scroll-locked] {
   color: inherit;
 }
 
-/* Inline code — a quiet, neutral chip. Cyan is reserved for interaction,
+/* Inline code — a quiet, neutral chip. Purple is reserved for interaction,
    and inline code is not interactive. */
 .prose :where(code):not(:where([class~='not-prose'], [class~='not-prose'] *)) {
   font-family: var(--font-mono);

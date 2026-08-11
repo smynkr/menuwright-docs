@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Constellation } from '@/components/brand/constellation';
 import { OpenSearchButton } from '@/components/brand/open-search-button';
+import { FocusDeadEndHeading } from '@/components/focus-dead-end-heading';
 
 export default function NotFound() {
   return (
@@ -12,9 +13,11 @@ export default function NotFound() {
       <Constellation className="absolute inset-0 -z-10 h-full w-full" count={50} />
 
       <div className="ax-metric-label mb-4">page not on the menu</div>
-      <h1 className="font-display text-6xl font-semibold tracking-[-0.02em] text-fd-card-foreground sm:text-7xl">
-        404
-      </h1>
+      <FocusDeadEndHeading>
+        <h1 className="font-display text-6xl font-semibold tracking-[-0.02em] text-fd-card-foreground sm:text-7xl">
+          404
+        </h1>
+      </FocusDeadEndHeading>
       <p className="mt-4 max-w-md text-base leading-relaxed text-fd-muted-foreground">
         This page isn&apos;t on the menu. The dish you requested doesn&apos;t
         exist in the current lineup — check the URL, or search for what you
