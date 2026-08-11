@@ -165,10 +165,10 @@ export function check({ root = process.cwd() } = {}) {
       routeCollisions.push(`duplicate canonical route ${route}: ${sources.map((file) => path.relative(root, file).replaceAll(path.sep, "/")).join(", ")}`);
     }
   }
-  // Next rewrites `/` to `/menuwright` (the MenuWright index) without
+  // `/` renders the product index (app/(home)/page.tsx) without
   // replacing fragments, so root links must validate against that canonical
   // document's headings.
-  const rootIndex = routeFiles.get("/getting-started") ?? routeFiles.get("/menuwright");
+  const rootIndex = routeFiles.get("/menuwright") ?? routeFiles.get("/getting-started");
   if (rootIndex) routeFiles.set("/", rootIndex);
   const docsPath = path.join(root, "docs.json");
   const navRoutes = [];
