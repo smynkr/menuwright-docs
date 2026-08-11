@@ -3,18 +3,16 @@
 @import 'fumadocs-ui/css/preset.css';
 
 /* ---------------------------------------------------------------------------
- * Axiomancer brand theme
+ * MenuWright brand theme
  *
- * The brand is "a sky-survey instrument": a near-black void with single,
- * deliberate points of light. Cyan (#00D4FF) is the signal — the one
- * interaction color. Each product carries its own accent for identity.
+ * The brand is a quiet instrument panel: a near-black void with a single,
+ * deliberate point of light. Purple (#5D3EFB) is the signal — the one
+ * interaction color.
  *
  * Palette (from DESIGN.md):
  *   void #0A0A0A · surface #111111 · elevated #1A1A1A
  *   border-subtle #222222 · border-strong #3A3A3A
- *   signal cyan #00D4FF · gold #C9A227 · mist #4A9E8E
- *   products: overwatch #E5A836 · locus #6366F1 · codex #D4A574
- *             layer #F472B6 · drift #34D399
+ *   signal purple #5D3EFB · light #7A63FF · dark #3B1FD8
  * ------------------------------------------------------------------------- */
 
 @theme {
@@ -24,14 +22,10 @@
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* Product accent palette, exposed as Tailwind colors */
-  --color-ax-signal: #00d4ff;
-  --color-ax-gold: #c9a227;
-  --color-ax-mist: #4a9e8e;
-  --color-ax-overwatch: #e5a836;
-  --color-ax-locus: #6366f1;
-  --color-ax-codex: #d4a574;
-  --color-ax-layer: #f472b6;
-  --color-ax-drift: #34d399;
+  --color-mw-primary: #5d3efb;
+  --color-mw-primary-light: #7a63ff;
+  --color-mw-primary-dark: #3b1fd8;
+  --color-mw-ink: #0a0a0a;
 }
 
 html {
@@ -44,7 +38,7 @@ html > body[data-scroll-locked] {
 }
 
 /* ---------------------------------------------------------------------------
- * Light theme — paper, but still Axiom. Cyan darkens for contrast.
+ * Light theme — paper, but still MenuWright. Purple darkens for contrast.
  * (Declared before .dark so the dark void wins when .dark is present —
  *  both selectors have equal specificity, so source order decides.)
  * ------------------------------------------------------------------------- */
@@ -58,13 +52,13 @@ html > body[data-scroll-locked] {
   --color-fd-card: #f4f4f5;
   --color-fd-card-foreground: #161616;
   --color-fd-border: #e2e2e4;
-  --color-fd-primary: #0099bf;
+  --color-fd-primary: #3b1fd8;
   --color-fd-primary-foreground: #ffffff;
   --color-fd-secondary: #ececee;
   --color-fd-secondary-foreground: #161616;
-  --color-fd-accent: rgba(0, 153, 191, 0.1);
-  --color-fd-accent-foreground: #007a99;
-  --color-fd-ring: #0099bf;
+  --color-fd-accent: rgba(59, 31, 216, 0.1);
+  --color-fd-accent-foreground: #2e18a8;
+  --color-fd-ring: #3b1fd8;
   --color-fd-overlay: rgba(0, 0, 0, 0.25);
 }
 
@@ -81,13 +75,13 @@ html > body[data-scroll-locked] {
   --color-fd-card: #111111;
   --color-fd-card-foreground: #f2f2f2;
   --color-fd-border: #232323;
-  --color-fd-primary: #00d4ff;
-  --color-fd-primary-foreground: #04141a;
+  --color-fd-primary: #5d3efb;
+  --color-fd-primary-foreground: #f5f3ff;
   --color-fd-secondary: #161616;
   --color-fd-secondary-foreground: #e8e8e8;
-  --color-fd-accent: rgba(0, 212, 255, 0.12);
-  --color-fd-accent-foreground: #7fe7ff;
-  --color-fd-ring: #00d4ff;
+  --color-fd-accent: rgba(93, 62, 251, 0.14);
+  --color-fd-accent-foreground: #b3a6ff;
+  --color-fd-ring: #5d3efb;
   --color-fd-overlay: rgba(0, 0, 0, 0.6);
 }
 
@@ -141,7 +135,7 @@ html > body[data-scroll-locked] {
 
 /* Heading self-anchors are NOT links. Fumadocs wraps each heading's text in an
    <a href="#slug"> so the copy-anchor control has a target, which means the
-   "links are the signal" rule above would paint every h1–h6 cyan + underlined —
+   "links are the signal" rule above would paint every h1–h6 purple + underlined —
    an affordance lie (a heading that looks clickable) that also inverts
    hierarchy, making an h2 shout louder than the white serif h1.    Cyan stays reserved for real, navigational links; a heading's own anchor
    inherits the heading's ink (white in the void, near-black on paper) with no
@@ -190,7 +184,7 @@ html > body[data-scroll-locked] {
   color: var(--color-fd-muted-foreground);
 }
 
-/* Blockquote — the margin note. Neutral border, not cyan. */
+/* Blockquote — the margin note. Neutral border, not purple. */
 .prose :where(blockquote):not(:where([class~='not-prose'], [class~='not-prose'] *)) {
   border-inline-start: 2px solid var(--color-fd-border);
   font-style: normal;
@@ -251,51 +245,7 @@ article h1:first-of-type {
  * Signature components
  * ------------------------------------------------------------------------- */
 
-/* Live badge — "this is alive" */
-.ax-live-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  border: 1px solid rgba(0, 212, 255, 0.25);
-  background: rgba(0, 212, 255, 0.06);
-  color: #00d4ff;
-  border-radius: 9999px;
-  padding: 0.3rem 0.85rem;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  font-family: var(--font-sans);
-}
-/* The pulsing signal dot — works standalone or inside a badge */
-.ax-live-dot {
-  display: inline-block;
-  background: #00d4ff;
-  box-shadow: 0 0 8px rgba(0, 212, 255, 0.9);
-  animation: ax-pulse 2s ease-in-out infinite;
-}
-.ax-live-badge .ax-live-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 9999px;
-}
-@keyframes ax-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(0.8); }
-}
-
 /* Metric block — the brand asserts a number */
-.ax-metric-value {
-  font-family: var(--font-sans);
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1;
-  color: #ffffff;
-  font-variant-numeric: tabular-nums;
-}
-/* Light mode only — `:root` also matches `.dark`, so scope with :not(.dark)
-   or the dark theme gets the light ink color (near-black on near-black). */
-:root:not(.dark) .ax-metric-value { color: #161616; }
 .ax-metric-label {
   font-family: var(--font-sans);
   font-size: 0.72rem;
@@ -305,22 +255,12 @@ article h1:first-of-type {
   color: var(--color-fd-muted-foreground);
 }
 
-/* Section eyebrow */
-.ax-eyebrow {
-  font-family: var(--font-sans);
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--color-fd-primary);
-}
-
 /* Glow — reserved for the single most important interaction */
 .ax-glow {
-  box-shadow: 0 0 20px rgba(0, 212, 255, 0.3), 0 0 40px rgba(0, 212, 255, 0.1);
+  box-shadow: 0 0 20px rgba(93, 62, 251, 0.3), 0 0 40px rgba(93, 62, 251, 0.1);
 }
 
-/* Constellation canvas sits behind the hero. A <canvas> is a replaced
+/* Constellation canvas sits behind dead-end surfaces. A <canvas> is a replaced
    element, so `inset: 0` alone does NOT stretch it — with width/height left
    auto it falls back to its intrinsic 300×150 and the star field renders in a
    small patch at the panel's top-left instead of filling it. Size it
@@ -333,34 +273,6 @@ article h1:first-of-type {
   pointer-events: none;
   overflow: hidden;
 }
-
-/* Telemetry feed rows slide in as they rotate */
-@keyframes ax-feed-in {
-  from { opacity: 0; transform: translateY(-6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.ax-feed-row {
-  animation: ax-feed-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-/* Hero headline underline sweep */
-@keyframes ax-underline {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
-}
-
-/* Word-by-word headline reveal */
-@keyframes ax-word-in {
-  from { opacity: 0; transform: translateY(0.35em); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Product accent utilities */
-.ax-accent-overwatch { --ax-accent: #e5a836; }
-.ax-accent-locus { --ax-accent: #6366f1; }
-.ax-accent-codex { --ax-accent: #d4a574; }
-.ax-accent-layer { --ax-accent: #f472b6; }
-.ax-accent-routeshift { --ax-accent: #34d399; }
 
 /* Diagram figure frame */
 .ax-figure {
@@ -390,9 +302,5 @@ article h1:first-of-type {
 
   .ax-constellation {
     display: none;
-  }
-
-  .ax-feed-row {
-    opacity: 1 !important;
   }
 }
