@@ -9,6 +9,24 @@ sources: [".codex/harness-memory.json", "README.md", "package.json", "next.confi
 
 # Durable ledger
 
+## 2026-08-11 — Review-lane fixes: fail-closed memory gate, T9, generated meta
+
+- pipeline/docs-agent.mjs: a failed `memory:generate` after canonical edits
+  now aborts the draft (previously logged and shipped a PR whose memory gate
+  would reject it). T9 rewritten to assert the fail-closed contract (no PR,
+  non-zero exit, diagnostic); T9b unchanged. 33 pipeline tests pass.
+- content/docs regenerated: meta.json title is now MenuWright (llms.txt and
+  search breadcrumbs were still "Axiomancer Labs").
+- FocusDeadEndHeading span -> div (valid HTML); cyan comments -> purple.
+
+Re-establish with:
+
+```bash
+npm run memory:check
+npm run test:pipeline
+```
+
+
 ## 2026-08-11 — docs.json asset-path fix
 
 - `favicon` and `logo` in docs.json pointed at `/images/favicon.svg` and
