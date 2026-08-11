@@ -8,10 +8,10 @@
     "light": "#7A63FF",
     "dark": "#3B1FD8"
   },
-  "favicon": "/images/favicon.svg",
+  "favicon": "/favicon.svg",
   "logo": {
-    "light": "/images/logo-light.svg",
-    "dark": "/images/logo-dark.svg",
+    "light": "/logo.svg",
+    "dark": "/logo.svg",
     "href": "https://menuwright.com"
   },
   "navigation": {
