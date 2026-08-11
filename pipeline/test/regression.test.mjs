@@ -319,7 +319,7 @@ test("T2: changed content writes the flat source, regenerates content/docs, and 
   assert.match(calls.at(-1), /--base main/);
 });
 
-test("T9: memory-manifest regeneration degrades gracefully when unavailable", (t) => {
+test("T9: memory-manifest regeneration failure aborts the draft (fail closed)", (t) => {
   const changedContent = "# Reference\n\nUpdated again.\n";
   const sandbox = setupSandbox({
     existingContent: "# Reference\n",
@@ -329,18 +329,16 @@ test("T9: memory-manifest regeneration degrades gracefully when unavailable", (t
   t.after(() => sandbox.cleanup());
   const result = sandbox.run();
 
-  // The fixture has no `npm run memory:generate` (no package.json scripts),
-  // so the driver must NOT abort the draft over the manifest regeneration —
-  // the draft PR's own memory gate remains the fail-closed backstop.
-  assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /memory:generate failed/);
-  // The canonical edit and regenerated output still ship...
-  const files = committedFiles(sandbox.docsRepo);
-  assert.ok(files.includes("layer/reference.mdx"), `commit missing flat source: ${files}`);
-  assert.ok(files.includes("content/docs/layer/reference.mdx"), `commit missing regenerated output: ${files}`);
-  // ...and the un-regenerated manifest was NOT staged (nothing stale rides along).
-  assert.ok(!files.includes("docs/wiki/_sources.json"), `manifest should stay unstaged: ${files}`);
-  assert.ok(!files.includes("docs/AGENT_SOT.md"), `AGENT_SOT should stay unstaged: ${files}`);
+  // The fixture has no `npm run memory:generate` (no package.json scripts).
+  // A draft whose canonical edits leave the memory manifests stale fails the
+  // docs repo's memory gate on arrival, so the driver must refuse to open it:
+  // non-zero exit, the failure diagnostic, and NO commit/PR.
+  assert.notEqual(result.status, 0, "driver must fail closed when memory:generate fails");
+  const allOutput = `${result.stdout}\n${result.stderr}`;
+  assert.match(allOutput, /memory:generate failed/);
+  assert.match(allOutput, /refusing to open a draft/);
+  const calls = ghCalls(sandbox.ghLogPath);
+  assert.ok(!calls.some((call) => call.includes("pr create")), "no PR may open when the memory gate fails");
 });
 
 test("T9b: memory-manifest regeneration success stages the fresh manifest", (t) => {
