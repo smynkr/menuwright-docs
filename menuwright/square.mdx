@@ -31,8 +31,9 @@ The exchange runs under your signed-in session, so connected tokens always bind 
 ## How tokens are handled
 
 - Tokens are **encrypted at rest** (Fernet) before they touch the database.
-- Access tokens are refreshed automatically when they expire.
-- Disconnecting from **Settings → Data** deletes the stored credentials immediately.
+- Square access tokens expire after 24 hours. When a sync detects an expired token, MenuWright automatically refreshes it using the stored refresh token — Square rotates the refresh token on every use, so the new token pair is re-encrypted and persisted.
+- If the refresh token itself has expired or been revoked (refresh tokens last 30 days), the connection enters a **needs reconnect** state. The Data and Settings pages show a "Reconnect Square" prompt instead of a silently dead "Connected" indicator, and syncs pause until you reconnect.
+- Disconnecting from **Settings → Data** revokes the OAuth grant on Square's side and clears the stored credentials. The revoke is idempotent, so disconnecting an already-expired connection is safe.
 
 ## The sync contract
 
