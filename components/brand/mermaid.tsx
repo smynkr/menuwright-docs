@@ -13,7 +13,7 @@ interface MermaidProps {
 }
 
 /**
- * Renders a Mermaid diagram themed to the Axiomancer palette. Re-renders on
+ * Renders a Mermaid diagram themed to the MenuWright palette. Re-renders on
  * theme change so diagrams stay legible in both the void and on paper.
  *
  * Usage in MDX:

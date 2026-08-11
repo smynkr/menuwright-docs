@@ -62,7 +62,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     >
       <body className={[inter.variable, playfair.variable, jetbrainsMono.variable].join(' ')}>
         <PostHogProvider>
-          <RootProvider search={{ SearchDialog: DocsSearchDialog }}>
+          <RootProvider search={{ SearchDialog: DocsSearchDialog }} theme={{ defaultTheme: 'dark' }}>
             {children}
           </RootProvider>
           <Intercom />

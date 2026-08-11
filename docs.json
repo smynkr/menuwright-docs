@@ -1,18 +1,18 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Axiomancer Labs",
-  "description": "MenuWright documentation \u2014 AI menu engineering for independent restaurants.",
+  "name": "MenuWright",
+  "description": "MenuWright documentation \u2014 menu engineering for independent restaurants: matrix analysis, dollar-impact recommendations, and POS or CSV integration.",
   "colors": {
-    "primary": "#00D4FF",
-    "light": "#5DE5FF",
-    "dark": "#0099BF"
+    "primary": "#5D3EFB",
+    "light": "#7A63FF",
+    "dark": "#3B1FD8"
   },
   "favicon": "/images/favicon.svg",
   "logo": {
     "light": "/images/logo-light.svg",
     "dark": "/images/logo-dark.svg",
-    "href": "https://axiomancer.io"
+    "href": "https://menuwright.com"
   },
   "navigation": {
     "products": [
