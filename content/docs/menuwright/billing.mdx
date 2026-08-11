@@ -1,73 +1,69 @@
 ---
-title: Billing and usage limits
-description: Free and Pro plans, monthly usage limits, overage pricing, and how
-  MenuWright enforces them.
+title: Billing and plans
+description: Free, Core, and Pro plans — flat monthly pricing, usage limits, and
+  how MenuWright enforces them.
 ---
 
-import { ChartLine, LifeBuoy, Rocket } from 'lucide-react';
+import { ChartLine, LifeBuoy } from 'lucide-react';
 
-MenuWright is a freemium subscription. The Free plan demonstrates the core value; Pro unlocks the full workflow.
+MenuWright is a freemium subscription. The Free plan demonstrates the core value; paid plans remove the limits.
 
 ## Plans
 
-|                               | Free        | Pro               |
-| ----------------------------- | ----------- | ----------------- |
-| **Price**                     | $0          | **$99/month**     |
-| **Analysis runs**             | 1 per month | 4 per month       |
-| **AI recommendation sets**    | 3 per month | 20 per month      |
-| **Overage — analysis**        | —           | $10 per extra run |
-| **Overage — recommendations** | —           | $5 per extra set  |
-| **Menu items**                | Unlimited   | Unlimited         |
-| **POS integration**           | Yes         | Yes               |
-| **Reports (email/PDF)**       | No          | Yes               |
+|                                       | Free                  | Core                        | Pro                         |
+| ------------------------------------- | --------------------- | --------------------------- | --------------------------- |
+| **Price**                             | $0                    | **$29/month**               | **$99/month**               |
+| **Analysis runs**                     | 1 per month           | Unlimited                   | Unlimited                   |
+| **AI recommendation set**             | 1 preview             | Full set with dollar impact | Full set with dollar impact |
+| **Menu matrix dashboard**             | Yes                   | Yes                         | Yes                         |
+| **Bundle & cannibalization insights** | Yes                   | Yes                         | Yes                         |
+| **Revenue forecasting & seasonality** | Yes                   | Yes                         | Yes                         |
+| **Weekly & monthly reports**          | Yes (preview content) | Yes                         | Yes                         |
+| **Square POS integration**            | Yes                   | Yes                         | Yes                         |
+| **Priority support**                  | —                     | —                           | Yes                         |
+| **Early access to new features**      | —                     | —                           | Yes                         |
 
-## How usage is counted
+All paid plans are **flat-rate** — usage is not metered and there are no overage charges.
 
-Two counters track the current billing cycle: one for analysis runs, one for recommendation sets.
+## How usage works
 
-- **Free**: hitting a limit returns a clear `usage_limit_exceeded` error with an upgrade call to action. The atomic claim means a run that fails validation **does not** burn your allowance.
-- **Pro within limits**: runs normally.
-- **Pro over limits**: the run still proceeds, and the overage is reported to Stripe's metered billing — `$10` per analysis, `$5` per recommendation set — invoiced at the end of the billing period.
+One counter tracks analysis runs for the current billing cycle.
 
-Counters reset monthly. Pro counters also reset when an `invoice.paid` webhook fires.
+- **Free**: the plan allows 1 analysis per month. Hitting the limit returns a clear `usage_limit_exceeded` error with an upgrade call to action. The atomic claim means a run that fails validation **does not** burn your allowance.
+- **Free recommendations**: the free plan shows the single highest-impact pending recommendation as a preview; the rest of the set is locked with a count teaser pointing at the upgrade path. What the app withholds is never leaked elsewhere — the weekly digest carries only the same preview.
+- **Core and Pro**: unlimited analyses and the complete AI recommendation set with dollar-impact projections.
 
-Sample-data onboarding is exempt from usage billing.
+Counters reset monthly via the `reset_all_usage_counters` task. Stripe subscribers reset on `invoice.paid` instead, and the calendar reset excludes them.
+
+Sample-data onboarding is exempt from usage limits.
 
 ## Plans, Stripe, and the dashboard
 
-| Surface            | What it does                                                                     |
-| ------------------ | -------------------------------------------------------------------------------- |
-| **Upgrade**        | Stripe Checkout session for the Pro plan; completion flips the restaurant to Pro |
-| **Manage billing** | Stripe Customer Portal for payment method, invoices, and cancellation            |
-| **Usage meter**    | Settings shows "2 of 4 analyses used this month" style progress                  |
-| **Upgrade banner** | Persistent banner on Free accounts with a direct upgrade action                  |
+| Surface            | What it does                                                                                    |
+| ------------------ | ----------------------------------------------------------------------------------------------- |
+| **Upgrade**        | Stripe Checkout for the chosen plan (Core or Pro); completion flips the restaurant to that plan |
+| **Manage billing** | Stripe Customer Portal for payment method, invoices, and plan switches                          |
+| **Plan switching** | Paid plans switch through the portal — a second checkout subscription is never created          |
+| **Usage display**  | Free accounts see "1 analysis per month on Free" style copy; paid accounts render Unlimited     |
 
-Pro is month-to-month with no long-term commitment. Cancel anytime from billing settings.
-
-<Callout type="warn">
-  The billing contract above is the current product state. Pricing changes are under evaluation — check this page rather than relying on older pricing copy elsewhere.
-</Callout>
+Core and Pro are month-to-month with no long-term commitment. Cancel anytime from billing settings.
 
 ## Enforcement behavior
 
-| Action                   | Free                                                    | Pro (within limits) | Pro (over limits)                   |
-| ------------------------ | ------------------------------------------------------- | ------------------- | ----------------------------------- |
-| Run analysis             | Allowed while count \< 1, else blocked with upgrade CTA | Allowed             | Allowed, overage reported to Stripe |
-| Generate recommendations | Allowed while count \< 3, else blocked with upgrade CTA | Allowed             | Allowed, overage reported to Stripe |
-| View reports             | Blocked with upgrade CTA                                | Allowed             | Allowed                             |
+| Action                  | Free                                                    | Core         | Pro          |
+| ----------------------- | ------------------------------------------------------- | ------------ | ------------ |
+| Run analysis            | Allowed while count \< 1, else blocked with upgrade CTA | Allowed      | Allowed      |
+| View recommendation set | 1 preview; rest locked with upgrade teaser              | Full set     | Full set     |
+| Receive reports         | Digest/report with preview content                      | Full content | Full content |
 
 ## Related
 
 <Cards>
   <Card icon={<ChartLine />} title="Reports" href="/menuwright/reports">
-    What Pro unlocks for scheduled reporting.
-  </Card>
-
-  <Card icon={<Rocket />} title="Getting started" href="/menuwright/getting-started">
-    Run your first analysis on the Free plan.
+    What the weekly digest and monthly PDF deep dive contain.
   </Card>
 
   <Card icon={<LifeBuoy />} title="FAQ" href="/menuwright/faq">
-    Billing, cancellation, and data questions.
+    Plan questions, POS support, and data boundaries.
   </Card>
 </Cards>
