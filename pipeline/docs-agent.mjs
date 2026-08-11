@@ -1071,6 +1071,15 @@ function applyChangesAndOpenPR(opts, { fileBlocks, prMeta, backendName, droppedP
   // flat sources and content/docs in sync (the LAY-721 drift class).
   const regenerated = regenerateGeneratedOutput(opts.docsRepoPath);
 
+  // The docs repo's "Validate canonical memory" gate checks that
+  // docs/wiki/_sources.json matches the canonical sources (and AGENT_SOT.md
+  // matches the wiki). A PR that edits canonical MDX makes the manifest
+  // stale, which fails the gate on the draft PR — regenerate and stage it
+  // here (MENU-58: PR #70 failed exactly this way and let pricing drift
+  // ship). Best-effort: gate content is still covered by the driver's own
+  // canary run; if generation is unavailable, the draft PR's CI will say so.
+  const manifestRegenerated = regenerateMemoryManifest(opts.docsRepoPath);
+
   // Stage exactly this run's contract surface: the canonical edits plus, when
   // regeneration ran, the trees it owns. Deliberately NOT `git add -A` — a
   // long-lived local checkout may carry unrelated untracked files, and those
@@ -1078,6 +1087,11 @@ function applyChangesAndOpenPR(opts, { fileBlocks, prMeta, backendName, droppedP
   const pathspecs = [...changed.map((c) => c.relPath)];
   if (regenerated) {
     for (const generated of ["content/docs", path.join("_migration", "reports")]) {
+      if (existsSync(path.join(opts.docsRepoPath, generated))) pathspecs.push(generated);
+    }
+  }
+  if (manifestRegenerated) {
+    for (const generated of [path.join("docs", "wiki", "_sources.json"), path.join("docs", "AGENT_SOT.md")]) {
       if (existsSync(path.join(opts.docsRepoPath, generated))) pathspecs.push(generated);
     }
   }
@@ -1261,6 +1275,30 @@ function regenerateGeneratedOutput(docsRepoPath) {
       `content/docs regeneration failed (exit ${res.status}). The canonical edits were written ` +
       `but are not committed — fix the failure before retrying.\n--- stderr ---\n${(res.stderr || "").slice(-4000)}`
     );
+  }
+  return true;
+}
+
+/**
+ * Regenerate the docs repo's memory manifest (docs/wiki/_sources.json +
+ * docs/AGENT_SOT.md) after canonical edits, so a docs-agent PR passes the
+ * repo's "Validate canonical memory" gate (MENU-58). Returns true when the
+ * manifest exists and was regenerated; false when the checkout predates the
+ * tooling (the draft PR's own CI will then flag staleness).
+ */
+function regenerateMemoryManifest(docsRepoPath) {
+  const manifest = path.join(docsRepoPath, "docs", "wiki", "_sources.json");
+  const sot = path.join(docsRepoPath, "docs", "AGENT_SOT.md");
+  if (!existsSync(manifest) && !existsSync(sot)) {
+    log("no docs/wiki/_sources.json or docs/AGENT_SOT.md in this checkout; skipping memory-manifest regeneration.");
+    return false;
+  }
+  const res = runAllowFail("npm", ["run", "memory:generate"], { cwd: docsRepoPath });
+  if (res.status !== 0) {
+    // The canary (memory:check) on the draft PR is the fail-closed backstop;
+    // don't abort the whole draft over a generator hiccup.
+    log(`memory:generate failed (exit ${res.status}) — the draft PR's memory gate will flag staleness.`);
+    return false;
   }
   return true;
 }
