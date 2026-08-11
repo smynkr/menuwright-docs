@@ -39,6 +39,8 @@ function setupSandbox({
   product = "layer",
   defaultBranch = "main",
   seedDocsJson = true,
+  seedMemoryManifest = false,
+  fakeMemoryGenerate = false,
   filesApiFixture = null,
 }) {
   const root = mkdtempSync(path.join(tmpdir(), "docs-agent-regression-"));
@@ -100,6 +102,23 @@ exit 1
 `,
   );
 
+  if (fakeMemoryGenerate) {
+    // A fake `npm` that stands in for `npm run memory:generate` (which needs
+    // the real sot_wiki python scripts): rewrites the manifest so it becomes
+    // dirty and therefore stageable.
+    writeExecutable(
+      path.join(binDir, "npm"),
+      `#!/bin/sh
+if [ "$1" = "run" ] && [ "$2" = "memory:generate" ]; then
+  printf '{ "fresh": true }\n' > "$PWD/docs/wiki/_sources.json"
+  printf '# fresh index\n' > "$PWD/docs/AGENT_SOT.md"
+  exit 0
+fi
+exit 1
+`,
+    );
+  }
+
   command("git", ["init", "--bare", docsRemote]);
   command("git", ["clone", docsRemote, docsRepo]);
   command("git", ["-C", docsRepo, "checkout", "-b", defaultBranch]);
@@ -126,6 +145,15 @@ exit 1
       "utf8",
     );
     command("git", ["-C", docsRepo, "add", "docs.json"]);
+  }
+
+  // Memory-manifest sentinel: real docs repos carry docs/wiki/_sources.json
+  // + docs/AGENT_SOT.md, which the "Validate canonical memory" gate checks.
+  if (seedMemoryManifest) {
+    mkdirSync(path.join(docsRepo, "docs", "wiki"), { recursive: true });
+    writeFileSync(path.join(docsRepo, "docs", "wiki", "_sources.json"), '{}\n', "utf8");
+    writeFileSync(path.join(docsRepo, "docs", "AGENT_SOT.md"), "# index\n", "utf8");
+    command("git", ["-C", docsRepo, "add", "docs/wiki/_sources.json", "docs/AGENT_SOT.md"]);
   }
 
   // Generation stub: copies each flat product tree into content/docs/<product>,
@@ -289,6 +317,51 @@ test("T2: changed content writes the flat source, regenerates content/docs, and 
     "pr create",
   ]);
   assert.match(calls.at(-1), /--base main/);
+});
+
+test("T9: memory-manifest regeneration degrades gracefully when unavailable", (t) => {
+  const changedContent = "# Reference\n\nUpdated again.\n";
+  const sandbox = setupSandbox({
+    existingContent: "# Reference\n",
+    backendOutput: fileBlock(changedContent),
+    seedMemoryManifest: true, // docs/wiki/_sources.json + AGENT_SOT.md present
+  });
+  t.after(() => sandbox.cleanup());
+  const result = sandbox.run();
+
+  // The fixture has no `npm run memory:generate` (no package.json scripts),
+  // so the driver must NOT abort the draft over the manifest regeneration —
+  // the draft PR's own memory gate remains the fail-closed backstop.
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /memory:generate failed/);
+  // The canonical edit and regenerated output still ship...
+  const files = committedFiles(sandbox.docsRepo);
+  assert.ok(files.includes("layer/reference.mdx"), `commit missing flat source: ${files}`);
+  assert.ok(files.includes("content/docs/layer/reference.mdx"), `commit missing regenerated output: ${files}`);
+  // ...and the un-regenerated manifest was NOT staged (nothing stale rides along).
+  assert.ok(!files.includes("docs/wiki/_sources.json"), `manifest should stay unstaged: ${files}`);
+  assert.ok(!files.includes("docs/AGENT_SOT.md"), `AGENT_SOT should stay unstaged: ${files}`);
+});
+
+test("T9b: memory-manifest regeneration success stages the fresh manifest", (t) => {
+  const changedContent = "# Reference\n\nUpdated once more.\n";
+  const sandbox = setupSandbox({
+    existingContent: "# Reference\n",
+    backendOutput: fileBlock(changedContent),
+    seedMemoryManifest: true,
+    fakeMemoryGenerate: true, // npm run memory:generate "succeeds"
+  });
+  t.after(() => sandbox.cleanup());
+  const result = sandbox.run();
+
+  assert.equal(result.status, 0, result.stderr);
+  // The fresh manifest is regenerated and staged alongside the canonical edit
+  // and generated output, so the draft PR passes "Validate canonical memory".
+  const files = committedFiles(sandbox.docsRepo);
+  assert.ok(files.includes("layer/reference.mdx"), `commit missing flat source: ${files}`);
+  assert.ok(files.includes("content/docs/layer/reference.mdx"), `commit missing regenerated output: ${files}`);
+  assert.ok(files.includes("docs/wiki/_sources.json"), `commit missing regenerated manifest: ${files}`);
+  assert.ok(files.includes("docs/AGENT_SOT.md"), `commit missing regenerated AGENT_SOT: ${files}`);
 });
 
 test("T3: base branch is auto-detected from the docs repo, not hardcoded to main", (t) => {
