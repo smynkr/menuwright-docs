@@ -1,6 +1,6 @@
 ---
 title: "MenuWright FAQ"
-description: "POS support, data boundaries, AI posture, billing, and reports — answers to common MenuWright questions."
+description: "POS support, data boundaries, AI posture, billing, team access, and reports — answers to common MenuWright questions."
 ---
 
 ## Do I need a POS system to use MenuWright?
@@ -63,6 +63,12 @@ Disconnecting Square revokes the OAuth grant and deletes the stored credentials 
 
 Never. The integration is strictly read-only: catalog and sales aggregates only. MenuWright never stores card or customer payment details.
 
+## Can a consultant work across multiple restaurants?
+
+Yes. Restaurant owners can add staff and consultants by email from **Settings → Team** — the person must already have a MenuWright account. Staff and consultants can operate the menu and run analyses but cannot manage billing, credentials, or team membership; only the restaurant owner can.
+
+Consultants who serve multiple restaurants see a restaurant switcher in the dashboard header and can switch between any restaurant they've been added to. A consultant who also owns their own MenuWright account retains owner powers only at their home restaurant — never at a client's. Removing a member revokes their access immediately: their active session for your restaurant is invalidated on the next request.
+
 ## What's on the roadmap?
 
-Toast and Clover adapters and consultant multi-restaurant mode are the headline directions — not yet available.
+Toast and Clover POS adapters are the headline directions — not yet available. Consultant multi-restaurant mode is now live.
