@@ -51,7 +51,7 @@ Report dispatchers run hourly and evaluate each restaurant in its configured tim
 | Weekly digest | The restaurant's local **8 AM** hour | A successful dispatch is not repeated until at least 7 days have elapsed. |
 | Monthly PDF | The restaurant's local **8 AM** hour on the **first day of the month** | A successful dispatch is not repeated until at least 27 days have elapsed. |
 
-The dispatcher claims a send before enqueueing the delivery task. If a report cannot be generated or sent, the claim is cleared so a later hourly tick can retry. A restaurant without a completed analysis or owner email is skipped and remains eligible for a later attempt.
+The dispatcher claims a send before enqueueing the delivery task. If email delivery fails, the task clears that report's marker so a later hourly tick can retry. A generation failure currently leaves the claim in place; generation-failure retry behavior is a known limitation under review. A restaurant without a completed analysis or owner email is skipped and remains eligible for a later attempt.
 
 ## Plan behavior
 

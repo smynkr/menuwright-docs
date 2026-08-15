@@ -16,7 +16,7 @@ import { ChartLine, FileText, Target } from 'lucide-react';
 MenuWright separates two views of your menu performance:
 
 - **Insights** uses the latest completed analysis for bundle opportunities and cannibalization risks, and uses available sales history for revenue forecasting.
-- **Trends** compares completed analyses over time so you can see whether the menu is moving in the right direction.
+- **Trends** compares analyses over time (including pending/failed states that appear in charts) so you can see whether the menu is moving in the right direction.
 
 Trends needs analysis history. Insights can show a forecast from sales history, but its bundle and cannibalization views need a completed analysis. When neither view has data, the page explains what to run next instead of showing an empty chart.
 
@@ -82,7 +82,7 @@ With no analyses, Trends asks you to run your first analysis and links back to o
 
 ### One analysis
 
-With one analysis, Trends shows that one analysis is complete and asks you to run a second analysis. It previews the two comparisons that become useful with more history:
+With one analysis record, regardless of whether its status is completed, pending, or failed, Trends says that more history is needed and asks you to run a second analysis. It previews the two comparisons that become useful with more history:
 
 - **Revenue over time** — a revenue line for each analysis.
 - **Item-level trends** — items that are rising, falling, or flat.

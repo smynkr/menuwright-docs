@@ -18,12 +18,12 @@ Use **Settings** to manage the restaurant profile, branding, team access, integr
 
 ## Restaurant profile
 
-The **Restaurant Profile** section shows the restaurant name and the signed-in email address.
+The **Restaurant Profile** section shows your home restaurant's name and the signed-in email address, even when you are viewing another restaurant.
 
 - The email field is read-only.
 - An owner viewing the home restaurant can change the restaurant name.
 - The name must not be blank after trimming.
-- When a consultant or staff member is viewing a restaurant, the name field is read-only and the page explains that only the restaurant owner can change it.
+- The name field is editable only for an owner in the home restaurant. In every other context—including staff or consultant access and a switched client restaurant—it is read-only, with a note that only the restaurant owner can change it.
 
 Save the new name to update the profile. Settings shows a success or error toast for the request.
 
@@ -69,9 +69,9 @@ If your account can access more than one restaurant, the dashboard header shows 
 - Your home restaurant, with its home role.
 - Any restaurants where you have an active staff or consultant membership.
 
-Choose a restaurant to switch the active context. MenuWright issues fresh access and refresh tokens bound to the selected restaurant, then reloads the app so every query reads the new tenant context. A switched session is checked against the current membership on every request; removing the membership makes that switched access invalid.
+Choose a restaurant to switch the active context. MenuWright issues fresh access and refresh tokens bound to the selected restaurant, then reloads the app. The selected context scopes tenant-aware requests, but Settings is not fully restaurant-scoped: its Restaurant Profile request still reads your home restaurant. A switched session is checked against the current membership on every request; removing the membership makes that switched access invalid.
 
-When you switch back to your home restaurant, the home role and owner controls become available again. Settings mirrors this rule by hiding team controls and making the restaurant name read-only while you are in a client context.
+When you switch back to your home restaurant, the home role and owner controls become available again. In a client context, Settings hides team and integration owner controls and makes the restaurant name read-only, while the profile still displays your home restaurant's name.
 
 ## Account and integrations
 
