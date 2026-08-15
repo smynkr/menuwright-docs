@@ -6,8 +6,8 @@ const BASE = 'https://docs.menuwright.com';
 export default function sitemap(): MetadataRoute.Sitemap {
   const pages = source
     .getPages()
-    // / 308-redirects to /getting-started; a redirecting URL must not be
-    // submitted in the sitemap, and getting-started takes the top slot.
+    // / renders the product index (app/(home)/page.tsx) — a duplicate of
+    // /<product>, which takes the canonical sitemap slot.
     .filter((page) => page.url !== '/')
     .map((page) => ({
       url: `${BASE}${page.url}`,

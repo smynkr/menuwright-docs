@@ -12,6 +12,9 @@
       "current-state",
       "ledger"
     ],
+    "app/(home)/page.tsx": [
+      "current-state"
+    ],
     "components/brand/products.ts": [
       "ledger"
     ],
@@ -38,10 +41,11 @@
     ".codex/harness-memory.json": "6bed6fa137bc1ab826846fde3e72d7c6f6fcdcb653a6849a945b91cec5c94b80",
     "README.md": "cbb9a374125962333e50dc4ecc6ea70e11405a1387672a7ff50017279353d01d",
     "_migration/tools/lib/shared.mjs": "d688253f2e5eddc449b1cf5b9f5d4f1ee20b894ca9eb98ec634627f093916310",
+    "app/(home)/page.tsx": "a5c6fdc1f1e9ecf90037598edeebff1d2f6fee89dfe940eb22dc687f14eb292e",
     "components/brand/products.ts": "9b186cd5be6e5e8c51fe8bf48bbc0b20df402aaeeef9a8267452d4f3febc31c0",
     "docs.json": "879f361240ef17ed2a260a540b881d60096e5d93212debd0b793a3f65d7d7a7d",
     "menuwright/index.mdx": "df096d777a1653c0e372d09a861bebbb89ac2bd72e7c33b9829f6385f63ba639",
-    "next.config.mjs": "afef19b50993da035ce096739cccef6a6ecd540b5537a8d90be672275eb62446",
+    "next.config.mjs": "74ab778eba7c218f8a6916f4a7248603084be4141e8af48a09b9b326af160907",
     "package.json": "e3faaf669b7f9b476e0210916434c5c4fd8dd829c316376321127e713943757a",
     "public/logo.svg": "537b5db7105ee91f429793f9ce74a6c33a008b8162671d5148dd353dd53d0f7f"
   }

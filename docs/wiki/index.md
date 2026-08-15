@@ -1,7 +1,7 @@
 ---
 title: MenuWright Docs wiki
 category: index
-updated: 2026-08-10
+updated: 2026-08-11
 ---
 
 # MenuWright Docs wiki
