@@ -23,7 +23,7 @@ MenuWright analyzes your menu matrix and sales data and produces specific, prior
 
 When you accept a recommendation, MenuWright anchors a closed-loop measurement: it compares the item's average daily revenue in matched calendar windows before and after the action day (the action day itself is excluded). Once both windows have at least 7 days with recorded sales, the recommendation card shows an **observed revenue change** alongside the original projection — for example, "+$380/mo observed" next to "+$410/mo projected."
 
-The windows are matched in length — a week after acting compares 7 days before against 7 days after, growing up to 30 days — so weekday-mix bias doesn't skew the comparison. Averages divide by the calendar span, not by the number of days with records, so sparse sellers aren't inflated.
+The windows use a growing matched calendar span: `span = min(30, days_since_action)`. The comparison stays weekday-mixed unless the span is a whole week, so matching lengths keeps it symmetric but does not by itself remove weekday-mix bias. Averages divide by the calendar span, not by the number of days with records, so sparse sellers aren't inflated.
 
 <Note>
   This is an observed before/after revenue change, <strong>not</strong> an attributable impact. An uncontrolled comparison on a single item cannot separate the recommendation's effect from a concurrent price change, promotion, or seasonal shift. The label says "observed revenue change" deliberately.
@@ -49,7 +49,7 @@ Production Square onboarding waits for Square's app review of MenuWright's produ
 
 ## What reports will I get?
 
-Every restaurant receives a weekly email digest (Monday, 8 AM local) and a monthly PDF deep dive (1st of the month, 8 AM local), both scheduled per-restaurant timezone. Free accounts receive the same reports with only the single preview recommendation and an upgrade note; paid plans get the full content. See [reports](/menuwright/reports).
+Every restaurant receives a weekly email digest (the dispatcher runs hourly and sends during the restaurant's local 8 AM hour; successful dispatches are not repeated until at least 7 days have elapsed) and a monthly PDF deep dive (1st of the month, 8 AM local), both scheduled per-restaurant timezone. Free accounts receive the same reports with only the single preview recommendation and an upgrade note; paid plans get the full content. See [reports](/menuwright/reports).
 
 ## What is the menu engineering matrix?
 
@@ -65,4 +65,4 @@ Never. The integration is strictly read-only: catalog and sales aggregates only.
 
 ## What's on the roadmap?
 
-Toast and Clover adapters and consultant multi-restaurant mode are the headline directions — not yet available.
+Toast and Clover adapters are the headline directions — not yet available.

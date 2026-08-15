@@ -1,0 +1,99 @@
+---
+title: Menu Scan and redesign
+description: Upload a menu photo, review the extracted structure, and generate a
+  matrix-informed layout redesign.
+keywords:
+  - menu scan
+  - menu photo
+  - redesign
+  - prominence
+  - layout
+  - menu image
+---
+
+import { ChartLine, FileText, Target } from 'lucide-react';
+
+Menu Scan turns a photo of a printed menu into structured sections and items. You can then compare the scanned layout with a MenuWright matrix analysis and preview or download a redesigned menu.
+
+<Callout>
+  Menu Scan is a separate flow from a sales import. It reads the menu's visible structure and layout; it does not create sales history or replace a menu analysis.
+</Callout>
+
+## The flow
+
+### 1. Upload a menu photo
+
+Open **Menu Scan** in the dashboard and upload one menu image. The upload accepts:
+
+- PNG
+- JPEG
+- WebP
+
+The image must be under **8 MB**. MenuWright checks the declared content type against the actual image format and rejects corrupt, unreadable, or mismatched files before sending them to the vision service. Use a sharp photo or scan with the full menu in frame.
+
+A failed scan returns an error instead of a partial menu. Nothing is persisted and no billing usage is claimed when the scan fails.
+
+### 2. Review the extracted menu
+
+After a successful scan, the page reports the restaurant name, number of extracted items, and number of sections. The extracted-menu view then shows:
+
+- Each section name.
+- Each item name.
+- The extracted price, when one is present.
+- A visual prominence score from `0` to `100`, when scoring data is available.
+
+The scan is returned with an integrity token. Keep the extracted result in the flow so the recommendation and redesign requests can verify that it was issued for the active restaurant and was not modified.
+
+### 3. Choose a matrix analysis
+
+The redesign plan needs an analysis because it compares the scanned layout with the item's matrix classification. Menu Scan loads the restaurant's analyses and selects the latest completed analysis by default; if none is completed, it uses the first available analysis.
+
+Use the **Matrix analysis to plan against** selector to choose a different analysis. If the restaurant has no analysis yet, the selector says **No analysis yet** and the plan cannot be built until you run one.
+
+### 4. Review what will change
+
+Select **Show what will change** to request placement recommendations. The server:
+
+1. Verifies the scan token for the active restaurant.
+2. Loads the selected analysis's matrix classifications with tenant scoping.
+3. Recomputes prominence from the scan's layout signals.
+4. Builds recommendations for meaningful layout gaps.
+
+Each recommendation shows the menu item, a short summary, and supporting detail. Recommendations are saved as placement recommendations for the selected analysis so they can appear with the existing recommendation and digest surfaces. If the layout already matches the matrix, the page says that there is nothing to change.
+
+### 5. Preview or download the redesign
+
+When a scan and analysis are selected, choose one of the output actions:
+
+- **Preview redesigned menu** opens an HTML preview in a new tab.
+- **Download PDF** downloads `redesigned-menu.pdf`.
+
+The redesign applies the plan to a copy of the scanned menu sections and renders the result while preserving the scanned layout skeleton. The redesign request is stateless: it does not persist a new scan or claim billing usage.
+
+If PDF rendering is unavailable, MenuWright returns an honest error and does not send HTML with a `.pdf` extension. Use the HTML preview while the PDF renderer is unavailable.
+
+## Troubleshooting
+
+| Symptom                                    | What to do                                                                                                                                      |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| The scan is rejected                       | Confirm the file is PNG, JPEG, or WebP, is under 8 MB, and is a readable image whose bytes match its declared type.                             |
+| The scan succeeds but no plan is available | Run a menu analysis, then select it in the plan section.                                                                                        |
+| The plan shows no changes                  | The scanned layout already matches the available matrix guidance, or the scan item could not be matched unambiguously to the selected analysis. |
+| The HTML preview does not open             | Allow popups for the MenuWright site and try the preview again.                                                                                 |
+| PDF generation fails                       | Use the HTML preview; the PDF renderer may be temporarily unavailable.                                                                          |
+
+## Related
+
+<Cards>
+  <Card icon={<Target />} title="Menu matrix" href="/menuwright/menu-matrix">
+    Understand the classifications used by the redesign plan.
+  </Card>
+
+  <Card icon={<ChartLine />} title="Insights and trends" href="/menuwright/insights-trends">
+    Explore bundle, cannibalization, forecast, and historical views.
+  </Card>
+
+  <Card icon={<FileText />} title="Data import" href="/menuwright/data-import">
+    Add menu items and costs for analysis.
+  </Card>
+</Cards>

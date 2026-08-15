@@ -1,64 +1,97 @@
 ---
 title: Reports
-description: Weekly email digests and monthly PDF deep dives, scheduled in each
-  restaurant's local timezone.
+description: Automatic weekly email digests and monthly PDF reports for every
+  plan, delivered in each restaurant's local timezone.
+keywords:
+  - weekly digest
+  - monthly report
+  - PDF report
+  - email delivery
+  - report schedule
+  - Free plan
 ---
 
 import { ChartLine, Rocket, Target } from 'lucide-react';
 
-MenuWright turns its analysis into two recurring reports, scheduled around each restaurant's own timezone.
+MenuWright sends two recurring report formats to the owner email for each restaurant with a completed analysis:
+
+- A **weekly HTML email digest**.
+- A **monthly PDF report** attached to an email.
 
 <Callout>
-  Reports are sent to every plan. Free accounts receive the same digest and PDF with only the single preview recommendation and an upgrade note — paid plans get the full content.
+  Reports are available on **every plan**. Free accounts receive the same digest and PDF delivery, but only a preview of the recommendation set; Core and Pro receive the full recommendation set.
 </Callout>
 
 ## Weekly email digest
 
-Every Monday at **8 AM local time**, restaurants receive a plain-HTML email digest with:
+The weekly task renders an HTML email with:
 
-- The top recommendations and their projected impact (single preview on Free)
-- Key metric changes from the previous week
-- Quick-action links into the dashboard
+- Total revenue.
+- Average contribution margin.
+- The number of menu items in the analysis.
+- Top recommendations for the week, including projected monthly impact when a recommendation has one.
+- A link back to the full dashboard.
 
-## Monthly PDF deep dive
+The digest template shows up to three recommendations. Free accounts receive only the single highest-impact preview recommendation; the rest stay locked behind the paid-plan upgrade note.
 
-On the first of the month at **8 AM local time**, restaurants receive a full PDF report:
+## Monthly PDF report
 
-- The complete menu matrix visualization
-- An item-by-item analysis table
-- Month-over-month trend charts
-- All AI recommendations with rationale (single preview on Free)
-- An executive summary — the "you're leaving $X/mo on the table" number
+The monthly task renders a PDF and attaches it to an email. The report contains:
 
-## Timezone-aware scheduling
+- An executive summary with total revenue, average contribution margin, and the number of analyzed items.
+- An item breakdown with each item's name, classification, price, food cost, contribution margin, menu mix percentage, and quantity sold.
+- Recommendations with their type, summary, and projected monthly impact when available.
+- A locked-recommendation count and upgrade link for Free accounts.
 
-Each restaurant declares a timezone. The dispatch tasks check the **local hour** per restaurant — so a West Coast restaurant gets its digest at 8 AM PT, not 8 AM UTC. Dispatchers run hourly and deduplicate:
+The PDF is generated as a real PDF. If the PDF renderer is unavailable, generation fails rather than sending HTML labeled as a `.pdf` file.
 
-- Weekly digests are skipped if one was already sent in the last 5 days
-- Monthly reports are skipped if one was already sent in the last 27 days
+## Who receives reports
 
-## Delivery
+The current delivery task sends both formats to the first active user with the **owner** role for the restaurant. The report footer identifies the message as owner delivery. Team members do not receive a separate copy through this task.
 
-| Detail             | Value                                                          |
-| ------------------ | -------------------------------------------------------------- |
-| **Weekly digest**  | HTML email via Resend                                          |
-| **Monthly report** | PDF generated with WeasyPrint, attached to an email via Resend |
-| **Sender**         | `reports@menuwright.com`                                       |
+The configured report sender is `reports@menuwright.com` in the current backend defaults. Delivery failures are reported by the email service; they do not count as a successful report send.
 
-If the PDF renderer is unavailable, generation **fails loudly** rather than sending an HTML file disguised as a PDF.
+## Schedule and timezone behavior
+
+Report dispatchers run hourly and evaluate each restaurant in its configured timezone:
+
+| Report        | Local send window                                                      | Duplicate protection                                                       |
+| ------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Weekly digest | The restaurant's local **8 AM** hour                                   | A successful dispatch is not repeated until at least 7 days have elapsed.  |
+| Monthly PDF   | The restaurant's local **8 AM** hour on the **first day of the month** | A successful dispatch is not repeated until at least 27 days have elapsed. |
+
+The dispatcher claims a send before enqueueing the delivery task. If email delivery fails, the task clears that report's marker so a later hourly tick can retry. A generation failure currently leaves the claim in place; generation-failure retry behavior is a known limitation under review. A restaurant without a completed analysis or owner email is skipped and remains eligible for a later attempt.
+
+## Plan behavior
+
+Delivery and recommendation access are separate concerns:
+
+| Detail                           | Free                                                              | Core                    | Pro                     |
+| -------------------------------- | ----------------------------------------------------------------- | ----------------------- | ----------------------- |
+| Weekly digest                    | Sent with preview content                                         | Sent with full content  | Sent with full content  |
+| Monthly PDF                      | Sent with preview content                                         | Sent with full content  | Sent with full content  |
+| Recommendation set in the report | One highest-impact preview; remaining recommendations stay locked | Full recommendation set | Full recommendation set |
+
+The report payload treats any plan that is not explicitly paid as Free for recommendation locking. That keeps report content aligned with the in-app recommendation preview instead of leaking the withheld set through email.
+
+## Delivery preferences
+
+The current report tasks use the restaurant's configured timezone and the owner email automatically. There is no separate report-recipient or frequency selector in this flow: weekly and monthly delivery are independent recurring tasks, and the latest completed analysis is selected automatically for each send.
+
+To view the underlying analysis and the complete recommendation experience available on your plan, use the dashboard link in the digest or open the [Menu matrix](/menuwright/menu-matrix) page.
 
 ## Related
 
 <Cards>
   <Card icon={<ChartLine />} title="Billing and usage" href="/menuwright/billing">
-    Pro unlocks reports; see the plan limits.
+    See how Free previews differ from the full recommendation set on Core and Pro.
   </Card>
 
   <Card icon={<Target />} title="Menu matrix" href="/menuwright/menu-matrix">
-    What the reports analyze.
+    See what each report analyzes.
   </Card>
 
   <Card icon={<Rocket />} title="Getting started" href="/menuwright/getting-started">
-    Set your restaurant timezone during onboarding.
+    Set up your restaurant and run the first analysis.
   </Card>
 </Cards>

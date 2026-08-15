@@ -44,20 +44,24 @@
                 "icon": "plug",
                 "pages": [
                   "menuwright/square",
-                  "menuwright/csv-import"
+                  "menuwright/csv-import",
+                  "menuwright/data-import"
                 ]
               },
               {
                 "group": "Account",
                 "icon": "settings",
                 "pages": [
-                  "menuwright/billing"
+                  "menuwright/billing",
+                  "menuwright/account-branding"
                 ]
               },
               {
                 "group": "Operations",
                 "icon": "chart-line",
                 "pages": [
+                  "menuwright/insights-trends",
+                  "menuwright/menu-scan",
                   "menuwright/reports"
                 ]
               },
@@ -65,6 +69,7 @@
                 "group": "Reference",
                 "icon": "life-buoy",
                 "pages": [
+                  "menuwright/changelog",
                   "menuwright/faq"
                 ]
               }
