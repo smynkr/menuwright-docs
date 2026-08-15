@@ -1,0 +1,106 @@
+---
+title: "Insights and trends"
+description: "Use Insights for bundle, cannibalization, and forecast views, then use Trends to compare your analysis history."
+keywords: ["insights", "trends", "bundles", "cannibalization", "forecast", "analysis history"]
+---
+
+MenuWright separates two views of your menu performance:
+
+- **Insights** uses the latest completed analysis for bundle opportunities and cannibalization risks, and uses available sales history for revenue forecasting.
+- **Trends** compares completed analyses over time so you can see whether the menu is moving in the right direction.
+
+Trends needs analysis history. Insights can show a forecast from sales history, but its bundle and cannibalization views need a completed analysis. When neither view has data, the page explains what to run next instead of showing an empty chart.
+
+## Insights
+
+Open **Insights** in the dashboard to see bundle optimization, cannibalization detection, and revenue forecasting. The page loads the three views together and shows a summary row before the detail tabs.
+
+<Callout>
+  Run an analysis first to unlock the full Insights view. If there is no analysis or forecast data, Insights links you to onboarding to run your first analysis.
+</Callout>
+
+### Summary cards
+
+The summary row shows:
+
+- **Bundle Opportunities** — the number of bundle combinations identified.
+- **Cannibalization Risks** — the number of high-risk pairs, followed by the total number of pairs found.
+- **Revenue Trend** — the weekly growth rate when a trend is available. If there is not enough data, the card shows `--` and says that more data is needed.
+
+### Bundle opportunities
+
+The **Bundle Opportunities** tab gives each suggested combination its own card. A card can include:
+
+- The strategy: **Premium Combo** or **Hidden Gem Boost**.
+- The item names joined as a proposed combination.
+- The stated rationale.
+- The a-la-carte price and bundle price.
+- The percentage savings.
+- The bundle margin when the analysis provides one.
+
+If no combinations are found, the page explains that there may not be enough items to pair or that the items are all in the same category.
+
+### Cannibalization
+
+The **Cannibalization** tab shows item pairs that may compete with each other. Each pair includes:
+
+- The shared category.
+- Both item names, classifications, menu prices, and revenue.
+- A severity label: **High Risk**, **Medium Risk**, or **Low Risk**.
+- The reasons detected by the analysis.
+- A recommendation and, when positive, an estimated potential monthly recovery.
+
+No pairs is a valid result: the page reports that no cannibalization was detected rather than treating it as an error.
+
+### Forecast
+
+The **Forecast** tab combines several views:
+
+- **Revenue Forecast** compares current weekly revenue with predicted revenue in future weeks. The chart also displays the trend's R² value.
+- **Day-of-Week Patterns** shows a revenue index for each day, where `1.0` is the average.
+- **Monthly Seasonality** shows the same type of revenue index by month.
+- **Item Trends** lists items with the strongest revenue changes, including direction (up, down, or flat), weekly growth percentage, and the number of data points.
+
+If there is not enough historical data, the forecast tab says so and suggests importing more sales data or running more analyses over time.
+
+## Trends
+
+Open **Trends** to review historical performance across menu analyses. MenuWright loads the analysis list, orders it from oldest to newest by analysis date, and then chooses the appropriate state for the amount of history available.
+
+### No analysis history
+
+With no analyses, Trends asks you to run your first analysis and links back to onboarding.
+
+### One analysis
+
+With one analysis, Trends shows that one analysis is complete and asks you to run a second analysis. It previews the two comparisons that become useful with more history:
+
+- **Revenue over time** — a revenue line for each analysis.
+- **Item-level trends** — items that are rising, falling, or flat.
+
+### Two or more analyses
+
+With at least two analyses, Trends displays:
+
+- **Revenue and Margin Over Time** — total revenue for each analysis and average contribution margin when margin data is available. The margin series is omitted when no analysis has margin data.
+- **Analysis History** — the analysis date, analyzed period, item count, total revenue, and status.
+
+Analysis statuses are displayed as returned by the analysis history. Completed statuses are shown as completed; pending and other statuses remain visible so you can distinguish unfinished work from completed analyses.
+
+## Interpreting an empty or failed view
+
+An empty state can mean that the prerequisite analysis or historical data does not exist yet. A visible error is different: the page shows the error and a **Retry** button so you can reload the data without guessing whether the restaurant is empty.
+
+## Related
+
+<Cards>
+  <Card title="Menu matrix" icon="target" href="/menuwright/menu-matrix">
+    Learn how the analysis classifies each item.
+  </Card>
+  <Card title="Data import" icon="database" href="/menuwright/data-import">
+    Add menu items and fill in the cost data that powers analysis.
+  </Card>
+  <Card title="Reports" icon="chart-line" href="/menuwright/reports">
+    Receive recurring email and PDF versions of your analysis.
+  </Card>
+</Cards>
