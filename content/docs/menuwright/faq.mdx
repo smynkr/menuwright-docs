@@ -24,7 +24,7 @@ MenuWright analyzes your menu matrix and sales data and produces specific, prior
 
 When you accept a recommendation, MenuWright anchors a closed-loop measurement: it compares the item's average daily revenue in matched calendar windows before and after the action day (the action day itself is excluded). Once both windows have at least 7 days with recorded sales, the recommendation card shows an **observed revenue change** alongside the original projection — for example, "+$380/mo observed" next to "+$410/mo projected."
 
-The windows are matched in length — a week after acting compares 7 days before against 7 days after, growing up to 30 days — so weekday-mix bias doesn't skew the comparison. Averages divide by the calendar span, not by the number of days with records, so sparse sellers aren't inflated.
+The windows are matched in length — a week after acting compares 7 days before against 7 days after, growing up to 30 days. Matching lengths keeps the comparison symmetric but does not by itself remove weekday-mix bias. Averages divide by the calendar span, not by the number of days with records, so sparse sellers aren't inflated.
 
 <Callout>
   This is an observed before/after revenue change, <strong>not</strong> an attributable impact. An uncontrolled comparison on a single item cannot separate the recommendation's effect from a concurrent price change, promotion, or seasonal shift. The label says "observed revenue change" deliberately.
@@ -38,7 +38,7 @@ Every record is scoped to your restaurant, and Square credentials are encrypted 
 
 ## What does each plan include?
 
-Free: 1 analysis per month plus a preview of the single highest-impact AI recommendation. Core ($29/month): unlimited analyses and the complete AI recommendation set with dollar impact. Pro ($99/month): everything in Core plus priority support and early access to new features. All paid plans are flat-rate — no usage meters, no overage. See [billing and plans](/menuwright/billing) for the full contract.
+Free: 1 analysis per month plus a preview of the single highest-impact AI recommendation. Core ($29/month): unlimited analyses and the complete AI recommendation set with dollar impact. Pro ($99/month): everything in Core plus priority support. All paid plans are flat-rate — no usage meters, no overage. See [billing and plans](/menuwright/billing) for the full contract.
 
 ## Can I cancel anytime?
 

@@ -28,6 +28,7 @@ Re-establish with:
 ```bash
 npm run memory:check
 ```
+
 ## 2026-08-11 — Review-lane fixes: fail-closed memory gate, T9, generated meta
 
 - pipeline/docs-agent.mjs: a failed `memory:generate` after canonical edits
