@@ -12,11 +12,16 @@
     "---[Plug]Integrations---",
     "square",
     "csv-import",
+    "data-import",
     "---[Settings]Account---",
     "billing",
+    "account-branding",
     "---[ChartLine]Operations---",
+    "insights-trends",
+    "menu-scan",
     "reports",
     "---[LifeBuoy]Reference---",
+    "changelog",
     "faq"
   ]
 }
