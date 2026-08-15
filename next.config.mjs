@@ -34,6 +34,10 @@ const config = {
       { source: '/billing', destination: '/menuwright/billing' },
       { source: '/reports', destination: '/menuwright/reports' },
       { source: '/faq', destination: '/menuwright/faq' },
+      { source: '/insights-trends', destination: '/menuwright/insights-trends' },
+      { source: '/menu-scan', destination: '/menuwright/menu-scan' },
+      { source: '/data-import', destination: '/menuwright/data-import' },
+      { source: '/account-branding', destination: '/menuwright/account-branding' },
     ];
   },
 };
