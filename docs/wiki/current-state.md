@@ -1,10 +1,10 @@
 ---
 title: Current state
 category: current-state
-updated: 2026-08-10
+updated: 2026-08-11
 summary: Current repository-owned topology and content boundary
 nav_order: 20
-sources: ["README.md", "package.json", "next.config.mjs", "docs.json", "_migration/tools/lib/shared.mjs", "menuwright/index.mdx"]
+sources: ["README.md", "package.json", "next.config.mjs", "docs.json", "_migration/tools/lib/shared.mjs", "app/(home)/page.tsx", "menuwright/index.mdx"]
 ---
 
 # Current state
@@ -17,8 +17,9 @@ an unmapped-icon gate that fails generation).
 
 The site brand is MenuWright's own (`#5D3EFB` accent, crossed-utensils mark in
 `public/logo.svg` / `public/favicon.svg`); it carries no Axiom identity. The
-product index doubles as the landing page: `next.config.mjs` rewrites `/` and
-the clean page URLs (`/getting-started`, `/menu-matrix`, `/square`,
+product index doubles as the landing page: `app/(home)/page.tsx` renders
+it at `/` (a real page, so the logo's soft navigation works), while
+`next.config.mjs` rewrites the clean page URLs (`/getting-started`, `/menu-matrix`, `/square`,
 `/csv-import`, `/billing`, `/reports`, `/faq`) onto the `menuwright/*` routes
 so the address bar stays product-prefix-free.
 

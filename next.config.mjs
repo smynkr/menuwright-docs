@@ -1,3 +1,4 @@
+import { withSentryConfig } from '@sentry/nextjs';
 import { createMDX } from 'fumadocs-mdx/next';
 
 const withMDX = createMDX();
@@ -26,7 +27,9 @@ const config = {
       // Clean standalone URLs: docs.menuwright.com/<page> serves the
       // /menuwright/<page> route. The canonical source keeps its product
       // prefix; the rewrite keeps the pretty URL in the address bar.
-      { source: '/', destination: '/menuwright' },
+      // `/` itself is NOT rewritten — app/(home)/page.tsx renders the
+      // product index there (a rewrite-only `/` 404s on soft navigation,
+      // because the client router does not apply rewrites).
       { source: '/getting-started', destination: '/menuwright/getting-started' },
       { source: '/menu-matrix', destination: '/menuwright/menu-matrix' },
       { source: '/square', destination: '/menuwright/square' },
@@ -43,4 +46,4 @@ const config = {
   },
 };
 
-export default withMDX(config);
+export default withSentryConfig(withMDX(config), { silent: true });
