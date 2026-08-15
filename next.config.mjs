@@ -38,6 +38,7 @@ const config = {
       { source: '/menu-scan', destination: '/menuwright/menu-scan' },
       { source: '/data-import', destination: '/menuwright/data-import' },
       { source: '/account-branding', destination: '/menuwright/account-branding' },
+      { source: '/changelog', destination: '/menuwright/changelog' },
     ];
   },
 };
