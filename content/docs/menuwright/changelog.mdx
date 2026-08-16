@@ -9,6 +9,51 @@ keywords:
   - product changes
 ---
 
+## August 9–15, 2026
+
+32 user-facing changes shipped.
+
+### New features
+
+- pin recommendation lane to temperature 0 (determinism) ([#103](https://github.com/smynkr/MenuMakeover/pull/103))
+- mechanical anti-fabrication filter for rec item names (MENU-70) ([#100](https://github.com/smynkr/MenuMakeover/pull/100))
+- nightly CI eval run with cost cap (MENU-68) ([#99](https://github.com/smynkr/MenuMakeover/pull/99))
+- mock-corpus model eval + backtest harness, glm-5.2-fast default (MENU-64/68/69) ([#97](https://github.com/smynkr/MenuMakeover/pull/97))
+- MENU-57 layout-preserving menu redesign ([#96](https://github.com/smynkr/MenuMakeover/pull/96))
+- consultant mode — multi-restaurant memberships (roadmap P1) ([#95](https://github.com/smynkr/MenuMakeover/pull/95))
+- what-if pricing simulator (competitive-analysis P0) ([#89](https://github.com/smynkr/MenuMakeover/pull/89))
+- AI food-cost estimation (competitive-analysis P0) ([#88](https://github.com/smynkr/MenuMakeover/pull/88))
+- MENU-56 shift-gap recommendations — matrix-wired placement actions ([#85](https://github.com/smynkr/MenuMakeover/pull/85))
+- MENU-55 prominence scoring — explainable per-item 0-100 from layout signals ([#81](https://github.com/smynkr/MenuMakeover/pull/81))
+- MENU-54 extraction endpoint — scan a menu image into structured JSON ([#79](https://github.com/smynkr/MenuMakeover/pull/79))
+- MENU-28 polish — overflow guard, target comparison, iOS marker parity ([#74](https://github.com/smynkr/MenuMakeover/pull/74))
+- 3-tier pricing, remove metered overage (MENU-12/MENU-13) ([#68](https://github.com/smynkr/MenuMakeover/pull/68))
+- 3-tier UI — Free preview, Core $29, Pro $99 (MENU-12/MENU-13) ([#69](https://github.com/smynkr/MenuMakeover/pull/69))
+- MENU-31 closed-loop measurement — actual vs projected recommendation impact ([#67](https://github.com/smynkr/MenuMakeover/pull/67))
+- MENU-23 OAuth production-readiness — refresh, revoke, friendly auth errors ([#66](https://github.com/smynkr/MenuMakeover/pull/66))
+- MENU-38 MenuMax-refugee capture + MENU-22 teardown landing/template ([#65](https://github.com/smynkr/MenuMakeover/pull/65))
+- MENU-28 food cost calculator — browser-only SEO tool ([#58](https://github.com/smynkr/MenuMakeover/pull/58))
+- make Stripe meter events durable ([#54](https://github.com/smynkr/MenuMakeover/pull/54))
+- ship billing fix and product polish tranche ([#52](https://github.com/smynkr/MenuMakeover/pull/52))
+
+### Updates
+
+- landing pricing accuracy, app empty states, chart ticks, header dedup ([#98](https://github.com/smynkr/MenuMakeover/pull/98))
+- review pass 2026-08-11 — lint cleanup, dead assets, stale docs ([#70](https://github.com/smynkr/MenuMakeover/pull/70))
+
+### Fixes
+
+- grok-4.6 gap-review findings (PR #101 post-merge) ([#102](https://github.com/smynkr/MenuMakeover/pull/102))
+- pin corpus reference date + MENU-65 tolerant recs parse ([#101](https://github.com/smynkr/MenuMakeover/pull/101))
+- final round — sample-data activation, email-cap Redis, onboarding races, calculator parity ([#94](https://github.com/smynkr/MenuMakeover/pull/94))
+- services round — branding gate, email containment, reports cadence, insights math, Square timezone ([#93](https://github.com/smynkr/MenuMakeover/pull/93))
+- punch-list round — atomic report claims, durable failures, limiter storage ([#91](https://github.com/smynkr/MenuMakeover/pull/91))
+- sweep round — auth, schema drift, owner gates, UX honesty ([#90](https://github.com/smynkr/MenuMakeover/pull/90))
+- MENU-51 punch list per cross-review ([#63](https://github.com/smynkr/MenuMakeover/pull/63))
+- harden Stripe meter outbox per cross-review (MENU-8) ([#62](https://github.com/smynkr/MenuMakeover/pull/62))
+- block unhooked PostHog flag transport ([#56](https://github.com/smynkr/MenuMakeover/pull/56))
+- close MENU-51 lead and dashboard punch list ([#55](https://github.com/smynkr/MenuMakeover/pull/55))
+
 ## July 1 – August 8, 2026
 
 32 user-facing changes shipped.
