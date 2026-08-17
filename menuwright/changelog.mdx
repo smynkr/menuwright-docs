@@ -4,6 +4,15 @@ description: "Dated updates to MenuWright product documentation, product behavio
 keywords: ["changelog", "release notes", "updates", "product changes"]
 ---
 
+## August 16–17, 2026
+
+2 user-facing changes shipped.
+
+### Fixes
+
+- discount-aware contribution margin — engine now uses realized unit revenue (gross revenue ÷ quantity sold) instead of list price when sales data is available, so discounted items (combos, happy hours, promotions) no longer appear more profitable than they really are (MENU-82) ([#119](https://github.com/smynkr/MenuMakeover/pull/119))
+- Square sync accuracy — catalog sync emits one menu item per priced variation (keyed by variation ID) so order line items join without silent drops; sales sync uses realized revenue (charged amount net of tax) instead of list-price gross; free items (price $0) are now imported instead of skipped ([#119](https://github.com/smynkr/MenuMakeover/pull/119))
+
 ## August 9–15, 2026
 
 32 user-facing changes shipped.
