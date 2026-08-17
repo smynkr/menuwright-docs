@@ -14,11 +14,13 @@ No. The fastest path is connecting Square, which syncs your menu and sales autom
 
 ## What if I don't have food cost data?
 
-MenuWright still works — it classifies by popularity and revenue. Once items have food costs, it unlocks true contribution margins and the full profit-based matrix. See [the matrix methodology](/menuwright/menu-matrix).
+MenuWright still works without complete cost data. If you have food costs for **some** items but not others, items with costs retain their true contribution-margin classification, while items without costs receive a provisional revenue-share classification — marked with an **Est.** badge in the matrix. If you have no food costs at all, the entire menu classifies by popularity and revenue share. Adding food costs later upgrades provisional items to full margin-based classification. See [the matrix methodology](/menuwright/menu-matrix).
 
 ## How are the AI recommendations generated?
 
 MenuWright analyzes your menu matrix and sales data and produces specific, prioritized recommendations — reprice, promote, bundle, or cut — with a projected monthly dollar impact where one can be estimated. The AI layer uses an OpenAI-compatible interface to a primary and fallback provider; generation is a candidate step, and you decide what to act on. Recommendations fail gracefully: if the provider is unreachable, the analysis completes without recommendations rather than blocking.
+
+Projected impact is signed and honest: a **remove** recommendation on a money-losing item shows positive savings (the avoided loss), while removing a profitable item shows a negative figure reflecting the direct margin trade-off. Other recommendation types (reprice, promote, bundle) show positive projected gains.
 
 ## What is the "observed revenue change" on accepted recommendations?
 
