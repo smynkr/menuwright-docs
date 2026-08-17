@@ -4,6 +4,16 @@ description: "Dated updates to MenuWright product documentation, product behavio
 keywords: ["changelog", "release notes", "updates", "product changes"]
 ---
 
+## August 16–17, 2026
+
+3 user-facing changes shipped.
+
+### Updates
+
+- per-item cost fallback — mixed-cost menus keep margin-based classification for items with costs; items without costs get provisional revenue-share classification with Est. badge in the matrix ([#115](https://github.com/smynkr/MenuMakeover/pull/115))
+- recommendation prompt candidate injection — deterministic recall layer feeds high-probability opportunities (loss leaders, hidden gems, crowd pleasers, leftovers, borderline items) to the LLM so it focuses on verification and wording ([#115](https://github.com/smynkr/MenuMakeover/pull/115))
+- projection formula calibration — price-change uplift recalibrated to net CM gain after demand elasticity; remove recommendations now show honest signed margin trade-off (positive savings for loss-leaders, negative margin loss for profitable items) ([#115](https://github.com/smynkr/MenuMakeover/pull/115))
+
 ## August 9–15, 2026
 
 32 user-facing changes shipped.
