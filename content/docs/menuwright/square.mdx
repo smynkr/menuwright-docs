@@ -14,12 +14,12 @@ Connecting Square is the fastest way to bring a real menu and sales history into
 
 ## What you get
 
-| Capability       | Detail                                                                                      |
-| ---------------- | ------------------------------------------------------------------------------------------- |
-| **Catalog sync** | Menu items, categories, variations, and prices, mapped into MenuWright's item model         |
-| **Sales sync**   | Itemized order history, aggregated into daily sales records for the analysis window         |
-| **Initial sync** | On first connection: full catalog plus \~90 days of orders, followed by an analysis trigger |
-| **Ongoing sync** | Daily background sync keeps catalog and sales current                                       |
+| Capability       | Detail                                                                                                                                                 |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Catalog sync** | One menu item per priced variation (parent name + variation name), categories, and prices, mapped into MenuWright's item model                         |
+| **Sales sync**   | Itemized order history using realized revenue (charged amount net of tax, discount-aware), aggregated into daily sales records for the analysis window |
+| **Initial sync** | On first connection: full catalog plus \~90 days of orders, followed by an analysis trigger                                                            |
+| **Ongoing sync** | Daily background sync keeps catalog and sales current                                                                                                  |
 
 ## The connection flow
 
@@ -40,12 +40,16 @@ The exchange runs under your signed-in session, so connected tokens always bind 
 
 ## The sync contract
 
-| Item             | Detail                                                                                                  |
-| ---------------- | ------------------------------------------------------------------------------------------------------- |
-| **Menu items**   | Fetched from the Square Catalog API, including categories (resolved via the catalog's category objects) |
-| **Sales**        | Fetched from the Square Orders API and normalized into daily `SalesRecord` rows                         |
-| **Schedule**     | Daily sync via Celery beat at 04:00 UTC                                                                 |
-| **Sync history** | Every import is logged with source, records imported, and status                                        |
+| Item             | Detail                                                                                                                                          |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Menu items**   | Fetched from the Square Catalog API, one row per priced variation keyed by variation ID; categories resolved via the catalog's category objects |
+| **Sales**        | Fetched from the Square Orders API using realized revenue (charged amount net of tax) and normalized into daily `SalesRecord` rows              |
+| **Schedule**     | Daily sync via Celery beat at 04:00 UTC                                                                                                         |
+| **Sync history** | Every import is logged with source, records imported, and status                                                                                |
+
+<Callout>
+  Square order line items reference variation IDs, not parent item IDs. MenuWright imports one menu item per priced variation so sales join correctly — for example, an item with "Regular" and "Large" variations appears as two rows: "Latte (Regular)" and "Latte (Large)". Free items (price $0) are imported as legitimate menu rows, not skipped.
+</Callout>
 
 ## Limitations
 
