@@ -95,15 +95,18 @@ const BACKENDS = {
   // Works with any OpenAI-compatible endpoint (Neural Watt GLM, vLLM, etc.).
   // Env: DOCS_AGENT_GLM_API_BASE (e.g. https://api.neuralwatt.com/v1),
   //      DOCS_AGENT_GLM_MODEL (e.g. glm-5.2), GLM_API_KEY (Bearer token),
+  //      DOCS_AGENT_GLM_REASONING_EFFORT (optional: low | medium | high),
+  //      DOCS_AGENT_GLM_GATEWAY_ID (optional Cloudflare AI Gateway id),
   //      DOCS_AGENT_GLM_MAX_TOKENS (default 49152 — reasoning models spend
-  //      their completion budget on thinking BEFORE producing content; 16384
-  //      was observed burning out mid-thought with 0 content chars).
+  //      their completion budget on thinking BEFORE producing content).
   glm: {
     type: "api",
     apiBase: (process.env.DOCS_AGENT_GLM_API_BASE || "").replace(/\/+$/, ""),
     model: process.env.DOCS_AGENT_GLM_MODEL || "glm-5.2",
     apiKey: process.env.GLM_API_KEY || "",
     maxTokens: Number(process.env.DOCS_AGENT_GLM_MAX_TOKENS || 49152),
+    reasoningEffort: process.env.DOCS_AGENT_GLM_REASONING_EFFORT || "",
+    gatewayId: process.env.DOCS_AGENT_GLM_GATEWAY_ID || "",
   },
 };
 
@@ -204,7 +207,9 @@ Env:
   DOCS_AGENT_BACKEND, DOCS_AGENT_DOCS_REPO, DOCS_AGENT_DOCS_PATH,
   DOCS_AGENT_CLAUDE_CMD / _CODEX_CMD / _GEMINI_CMD (override the CLI binary),
   DOCS_AGENT_CLAUDE_ARGS / _CODEX_ARGS / _GEMINI_ARGS (override invocation flags),
-  DOCS_AGENT_TIMEOUT_MS, DOCS_AGENT_MAX_PAGES.
+  DOCS_AGENT_TIMEOUT_MS, DOCS_AGENT_MAX_PAGES,
+  DOCS_AGENT_GLM_REASONING_EFFORT (optional: low | medium | high),
+  DOCS_AGENT_GLM_GATEWAY_ID (optional Cloudflare AI Gateway id).
   Auth for whichever backend you pick is NOT this script's concern — it assumes
   the CLI on PATH is already authenticated (subscription OAuth locally, or a
   metered API key in hosted CI). See README.md.
@@ -632,6 +637,39 @@ export function parseSSEPayload(text) {
   }
   return { content, reasoningChars, finishReason, sawDone };
 }
+export function buildApiHeaders(backend) {
+  const headers = {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${backend.apiKey}`,
+  };
+  if (backend.gatewayId) {
+    headers["cf-aig-gateway-id"] = backend.gatewayId;
+    headers["cf-aig-collect-log-payload"] = "false";
+  }
+  return headers;
+}
+
+
+
+export function buildApiPayload(backend, prompt) {
+  const payload = {
+    model: backend.model,
+    messages: [{ role: "user", content: prompt }],
+    temperature: 0.2,
+    max_tokens: backend.maxTokens,
+    stream: true,
+  };
+  if (backend.reasoningEffort) {
+    if (!["low", "medium", "high"].includes(backend.reasoningEffort)) {
+      throw new Error(
+        `invalid DOCS_AGENT_GLM_REASONING_EFFORT=${backend.reasoningEffort}; expected low, medium, or high`,
+      );
+    }
+    payload.reasoning_effort = backend.reasoningEffort;
+  }
+  return payload;
+}
+
 
 function runBackend(backendName, prompt, timeoutMs) {
   const backend = BACKENDS[backendName];
@@ -641,7 +679,7 @@ function runBackend(backendName, prompt, timeoutMs) {
   if (backend.type === "api") {
     if (!backend.apiBase) fail(`backend "${backendName}" requires DOCS_AGENT_GLM_API_BASE (e.g. https://api.neuralwatt.com/v1)`);
     if (!backend.apiKey) fail(`backend "${backendName}" requires GLM_API_KEY env var (metered API key)`);
-    log(`invoking API backend "${backendName}" (${backend.apiBase}, model=${backend.model}, max_tokens=${backend.maxTokens}, streaming), timeout=${timeoutMs}ms...`);
+    log(`invoking API backend "${backendName}" (${backend.apiBase}, model=${backend.model}, max_tokens=${backend.maxTokens}, reasoning_effort=${backend.reasoningEffort || "provider-default"}, streaming), timeout=${timeoutMs}ms...`);
     return (async () => {
       try {
         // stream:true is load-bearing for this aggregator: non-streaming
@@ -652,17 +690,8 @@ function runBackend(backendName, prompt, timeoutMs) {
         // completion budget must cover BOTH, hence the large max_tokens.
         const res = await fetch(`${backend.apiBase}/chat/completions`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${backend.apiKey}`,
-          },
-          body: JSON.stringify({
-            model: backend.model,
-            messages: [{ role: "user", content: prompt }],
-            temperature: 0.2,
-            max_tokens: backend.maxTokens,
-            stream: true,
-          }),
+          headers: buildApiHeaders(backend),
+          body: JSON.stringify(buildApiPayload(backend, prompt)),
           signal: AbortSignal.timeout(timeoutMs),
         });
         if (!res.ok) {
