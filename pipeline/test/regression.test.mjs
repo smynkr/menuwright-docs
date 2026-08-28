@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { parseSSEPayload } from "../docs-agent.mjs";
+import { buildApiPayload, parseSSEPayload } from "../docs-agent.mjs";
 
 const testDir = path.dirname(fileURLToPath(import.meta.url));
 const driverPath = path.resolve(testDir, "..", "docs-agent.mjs");
@@ -534,6 +534,21 @@ test("T11: oversized PR diffs fall back to per-file patches without corruption",
   assert.ok(prompt.includes("arr[i][j]"), "patch content was corrupted");
   assert.ok(prompt.includes("assets/huge-generated-file.bin"), "patch-less file not disclosed to the model");
   assert.ok(prompt.includes("too large for the GitHub API"), "missing incomplete-diff section");
+});
+
+test("API payload includes configured reasoning effort only when set", () => {
+  const base = { model: "model", maxTokens: 1024, reasoningEffort: "" };
+  assert.deepEqual(buildApiPayload(base, "prompt"), {
+    model: "model",
+    messages: [{ role: "user", content: "prompt" }],
+    temperature: 0.2,
+    max_tokens: 1024,
+    stream: true,
+  });
+  assert.equal(
+    buildApiPayload({ ...base, reasoningEffort: "low" }, "prompt").reasoning_effort,
+    "low",
+  );
 });
 
 test("SSE payload parsing survives provider quirks and truncation signals", async (t) => {

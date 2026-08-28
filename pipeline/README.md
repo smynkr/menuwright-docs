@@ -55,13 +55,16 @@ root (`layer/`, `overwatch/`, `locus/`, `routeshift/`, `codex/`, `invest/`);
    hardcoded `main` once silently killed every draft PR against this repo's
    `master`; the detection now fails loud instead of guessing.
 
-Backend notes: the `glm` backend (OpenAI-compatible HTTP, e.g. Neural Watt GLM
-5.2) always streams (`stream:true` — non-streaming 524s at pipeline prompt
-sizes on that aggregator) and defaults `max_tokens` to 49152
+Backend notes: the `glm` backend supports any OpenAI-compatible HTTP endpoint
+and always streams (`stream:true` — non-streaming 524s were observed at
+pipeline prompt sizes). It defaults `max_tokens` to 49152
 (`DOCS_AGENT_GLM_MAX_TOKENS`), because reasoning models spend the completion
-budget on thinking before content. A stream that ends with
+budget on thinking before content. Providers that expose the OpenAI
+`reasoning_effort` field can pin it with
+`DOCS_AGENT_GLM_REASONING_EFFORT=low|medium|high`; when unset, the field is
+omitted and provider-default behavior is preserved. A stream that ends with
 `finish_reason=length` fails the run outright — truncated output is never
-committed, rather than smuggling a half-written FILE block into a PR.
+committed.
 
 ## Weekly recap (the durable fix for fabricated changelogs)
 
