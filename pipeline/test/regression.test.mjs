@@ -5,7 +5,14 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { buildApiHeaders, buildApiPayload, parseSSEPayload } from "../docs-agent.mjs";
+import {
+  backendReceiptLabel,
+  buildApiHeaders,
+  buildApiRequestBody,
+  parseSSEPayload,
+  retryAfterDelayMs,
+  validateGlmReasoningEffort,
+} from "../docs-agent.mjs";
 
 const testDir = path.dirname(fileURLToPath(import.meta.url));
 const driverPath = path.resolve(testDir, "..", "docs-agent.mjs");
@@ -234,6 +241,8 @@ console.log(JSON.stringify({ stub: true, destination: dest }));
           encoding: "utf8",
           env: {
             ...process.env,
+            DOCS_AGENT_SOURCE_TOKEN: "source-token",
+            GH_TOKEN: "destination-token",
             DOCS_AGENT_CLAUDE_CMD: backendPath,
             DOCS_AGENT_GH_LOG: ghLogPath,
             DOCS_AGENT_LOG_DIR: path.join(root, "logs"),
@@ -550,23 +559,119 @@ test("API headers route only configured calls through Cloudflare Gateway private
   });
 });
 
-test("API payload includes configured reasoning effort only when set", () => {
-  const base = { model: "model", maxTokens: 1024, reasoningEffort: "" };
-  assert.deepEqual(buildApiPayload(base, "prompt"), {
-    model: "model",
-    messages: [{ role: "user", content: "prompt" }],
-    temperature: 0.2,
-    max_tokens: 1024,
-    stream: true,
+test("GLM backend resolves the Cloudflare 5.3 Flash default model", () => {
+  const source = `const m = await import(${JSON.stringify(driverPath)}); process.stdout.write(m.backendReceiptLabel("glm"));`;
+  const childEnv = {
+    ...process.env,
+    DOCS_AGENT_GLM_API_BASE: "https://api.cloudflare.com/client/v4/accounts/00000000000000000000000000000000/ai/v1",
+    GLM_API_KEY: "test-key",
+  };
+  delete childEnv.DOCS_AGENT_GLM_MODEL;
+  const result = spawnSync(process.execPath, ["--input-type=module", "--eval", source], {
+    env: childEnv,
+    encoding: "utf8",
   });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /model: `@cf\/zai-org\/glm-5\.3-flash`/);
+});
+
+const TASK1_PROVIDER_BODY = Object.freeze({
+  model: "@cf/zai-org/glm-5.3-flash",
+  messages: [{ role: "user", content: "prompt" }],
+  temperature: 0.2,
+  max_tokens: 49152,
+  reasoning_effort: "high",
+  stream: true,
+});
+
+function normalizeProviderBody(body) {
+  return {
+    model: body.model,
+    messages: body.messages?.map(({ role, content }) => ({ role, content })),
+    temperature: body.temperature,
+    max_tokens: body.max_tokens,
+    reasoning_effort: body.reasoning_effort ?? null,
+    stream: body.stream,
+  };
+}
+
+test("normalized GLM provider body matches the Task 1 Cloudflare contract", () => {
+  const backend = {
+    model: "@cf/zai-org/glm-5.3-flash",
+    maxTokens: 49152,
+    reasoningEffort: "high",
+  };
+  assert.deepEqual(
+    normalizeProviderBody(buildApiRequestBody(backend, "prompt", true)),
+    TASK1_PROVIDER_BODY,
+  );
   assert.equal(
-    buildApiPayload({ ...base, reasoningEffort: "low" }, "prompt").reasoning_effort,
+    buildApiRequestBody({ ...backend, reasoningEffort: "low" }, "prompt", true).reasoning_effort,
     "low",
   );
-  assert.throws(
-    () => buildApiPayload({ ...base, reasoningEffort: "bogus" }, "prompt"),
-    /invalid DOCS_AGENT_GLM_REASONING_EFFORT/,
+
+  const cloudflare52 = buildApiRequestBody(
+    { ...backend, model: "@cf/zai-org/glm-5.2" },
+    "prompt",
+    true,
   );
+  assert.equal(Object.hasOwn(cloudflare52, "reasoning_effort"), false);
+  const generic53 = buildApiRequestBody(backend, "prompt", false);
+  assert.equal(Object.hasOwn(generic53, "reasoning_effort"), false);
+});
+
+test("GLM reasoning validation is limited to exact Cloudflare GLM-5.3-Flash", () => {
+  const backend = {
+    model: "@cf/zai-org/glm-5.3-flash",
+    reasoningEffort: "high",
+    reasoningEffortEnv: "DOCS_AGENT_GLM_REASONING_EFFORT",
+  };
+  for (const value of ["", "none", "max", "xhigh", "HIGH"]) {
+    assert.match(
+      validateGlmReasoningEffort(backend, true, value),
+      /must be low, medium, or high/,
+    );
+  }
+  assert.equal(
+    validateGlmReasoningEffort({ ...backend, model: "@cf/zai-org/glm-5.2" }, true, "bogus"),
+    null,
+  );
+  assert.equal(validateGlmReasoningEffort(backend, false, "bogus"), null);
+});
+
+test("Retry-After parsing uses seconds, HTTP-date, default, and a five-second cap", () => {
+  const headers = (value) => new Headers(value === undefined ? {} : { "Retry-After": value });
+  assert.equal(retryAfterDelayMs(headers("2"), 1_000), 2_000);
+  assert.equal(retryAfterDelayMs(headers(new Date(4_000).toUTCString()), 1_000), 3_000);
+  assert.equal(retryAfterDelayMs(headers(undefined), 1_000), 250);
+  assert.equal(retryAfterDelayMs(headers("99"), 1_000), 5_000);
+});
+
+const TASK1_WORKFLOW_PROVIDER_FIXTURE = Object.freeze({
+  source: "DOCS_AGENT_SOURCE_TOKEN: ${{ github.token }}",
+  destination: "GH_TOKEN: ${{ secrets.DOCS_REPO_PAT }}",
+  account: "CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}",
+  secret: "GLM_API_KEY: ${{ secrets.CLOUDFLARE_WORKERS_AI_TOKEN }}",
+  base: "DOCS_AGENT_GLM_API_BASE: ${{ vars.DOCS_AGENT_GLM_API_BASE }}",
+  model: "DOCS_AGENT_GLM_MODEL: ${{ vars.DOCS_AGENT_GLM_MODEL }}",
+  maxTokens: "DOCS_AGENT_GLM_MAX_TOKENS: ${{ vars.DOCS_AGENT_GLM_MAX_TOKENS }}",
+  reasoning: "DOCS_AGENT_GLM_REASONING_EFFORT: ${{ vars.DOCS_AGENT_GLM_REASONING_EFFORT || 'high' }}",
+});
+
+function normalizeWorkflowFixtureLine(line) {
+  return line.replace(/\r\n?/g, "\n").replace(/[ \t]+/g, " ").trim();
+}
+
+test("normalized hosted workflow provider block matches Task 1 without changing standalone names", () => {
+  const template = readFileSync(path.resolve(testDir, "..", "docs-agent.yml"), "utf8");
+  const normalized = normalizeWorkflowFixtureLine(template);
+  for (const line of Object.values(TASK1_WORKFLOW_PROVIDER_FIXTURE)) {
+    assert.ok(normalized.includes(normalizeWorkflowFixtureLine(line)), `missing workflow contract: ${line}`);
+  }
+  assert.match(template, /name:\s+hosted \(GLM 5\.2 — drafts doc update\)/);
+  assert.match(template, /name:\s+Run docs-agent with GLM 5\.2/);
+  assert.match(template, /DOCS_AGENT_GLM_GATEWAY_ID/);
+  assert.doesNotMatch(template, /secrets\.GLM_API_KEY/);
 });
 
 test("SSE payload parsing survives provider quirks and truncation signals", async (t) => {
