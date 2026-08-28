@@ -1,4 +1,4 @@
-# docs-agent — auto-draft doc updates on merged PRs using Neural Watt GLM 5.2.
+# docs-agent — auto-draft doc updates on merged PRs using Cloudflare GLM 5.3 Flash.
 #
 # TEMPLATE: copy this file to `.github/workflows/docs-agent.yml` in EACH
 # product repo and set the two marked spots for the product. It is configured
@@ -6,24 +6,25 @@
 # from the docs repo checkout below — fix the driver there once, and every
 # product repo picks it up on its next run.
 #
-# Flow: PR merged → detect user-facing changes → GLM 5.2 drafts MDX against
-# the CANONICAL flat sources → run-migration regenerates content/docs →
+# Flow: PR merged → detect user-facing changes → GLM-5.3-Flash drafts MDX
+# against the CANONICAL flat sources → run-migration regenerates content/docs →
 # draft PR opened against smynkr/menuwright-docs (base branch auto-detected).
 #
 # Required repo secrets:
-#   DOCS_REPO_PAT  — PAT with read on THIS product repo (the hosted job fetches
-#                    the PR diff via `gh`) plus Contents R/W + PRs R/W on
-#                    smynkr/menuwright-docs (docs checkout + draft PR). A fine-grained
-#                    PAT must therefore be granted on all product repos; a classic
-#                    `repo`-scope PAT already covers them all.
-#   GLM_API_KEY    — Neural Watt GLM 5.2 metered API key
+#   DOCS_REPO_PAT  — PAT with Contents R/W + PRs R/W on
+#                    smynkr/menuwright-docs (docs checkout + draft PR).
+#                    The source PR read uses the workflow's GITHUB_TOKEN.
+#   CLOUDFLARE_WORKERS_AI_TOKEN — account-scoped Workers AI token
 #
 # Required repo variables:
-#   DOCS_AGENT_GLM_API_BASE — e.g. https://api.neuralwatt.com/v1
-#   DOCS_AGENT_GLM_MODEL    — e.g. glm-5.2
+#   CLOUDFLARE_ACCOUNT_ID         — exactly 32 lowercase hexadecimal characters
+#   DOCS_AGENT_GLM_API_BASE       — Cloudflare OpenAI-compatible AI endpoint
+#   DOCS_AGENT_GLM_MODEL          — optional; defaults to @cf/zai-org/glm-5.3-flash
+#   DOCS_AGENT_GLM_MAX_TOKENS     — defaults to 49152
+#   DOCS_AGENT_GLM_REASONING_EFFORT — only exact Cloudflare GLM-5.3-Flash;
+#                                    low, medium, or high; defaults to high
 # Optional repo variables:
-#   DOCS_AGENT_GLM_REASONING_EFFORT — low | medium | high
-#   DOCS_AGENT_GLM_GATEWAY_ID       — Cloudflare AI Gateway id
+#   DOCS_AGENT_GLM_GATEWAY_ID     — Cloudflare AI Gateway id
 
 name: docs-agent
 
@@ -119,11 +120,14 @@ jobs:
 
       - name: Run docs-agent with GLM 5.2
         env:
+          DOCS_AGENT_SOURCE_TOKEN: ${{ github.token }}
           GH_TOKEN: ${{ secrets.DOCS_REPO_PAT }}
-          GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          GLM_API_KEY: ${{ secrets.CLOUDFLARE_WORKERS_AI_TOKEN }}
           DOCS_AGENT_GLM_API_BASE: ${{ vars.DOCS_AGENT_GLM_API_BASE }}
           DOCS_AGENT_GLM_MODEL: ${{ vars.DOCS_AGENT_GLM_MODEL }}
-          DOCS_AGENT_GLM_REASONING_EFFORT: ${{ vars.DOCS_AGENT_GLM_REASONING_EFFORT }}
+          DOCS_AGENT_GLM_MAX_TOKENS: ${{ vars.DOCS_AGENT_GLM_MAX_TOKENS }}
+          DOCS_AGENT_GLM_REASONING_EFFORT: ${{ vars.DOCS_AGENT_GLM_REASONING_EFFORT || 'high' }}
           DOCS_AGENT_GLM_GATEWAY_ID: ${{ vars.DOCS_AGENT_GLM_GATEWAY_ID }}
           DOCS_AGENT_LOG_DIR: ${{ github.workspace }}/docs-agent-logs
         run: |
