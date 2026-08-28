@@ -1,7 +1,7 @@
 ---
 title: Current state
 category: current-state
-updated: 2026-08-11
+updated: 2026-08-28
 summary: Current repository-owned topology and content boundary
 nav_order: 20
 sources: ["README.md", "package.json", "next.config.mjs", "docs.json", "_migration/tools/lib/shared.mjs", "app/(home)/page.tsx", "menuwright/index.mdx"]
@@ -31,7 +31,9 @@ product accents (`npm run test:links`).
 
 The docs-agent automation lives in the MenuWright product repo
 (`MenuMakeover`): merged PRs draft MDX against `menuwright/**` and open draft
-PRs into this repository (see `pipeline/docs-agent.yml`).
+PRs into this repository (see `pipeline/docs-agent.yml`). Its OpenAI-compatible
+GLM backend supports optional `reasoning_effort` plus Cloudflare AI Gateway
+routing with request/response payload retention disabled.
 
 Re-establish repository facts with:
 

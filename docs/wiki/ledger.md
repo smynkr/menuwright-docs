@@ -1,7 +1,7 @@
 ---
 title: Durable ledger
 category: current-state
-updated: 2026-08-11
+updated: 2026-08-28
 summary: Dated durable facts and their source anchors
 nav_order: 130
 sources: [".codex/harness-memory.json", "README.md", "package.json", "next.config.mjs", "docs.json", "_migration/tools/lib/shared.mjs", "components/brand/products.ts", "public/logo.svg"]
@@ -9,6 +9,25 @@ sources: [".codex/harness-memory.json", "README.md", "package.json", "next.confi
 
 # Durable ledger
 
+
+## 2026-08-28 — Docs-agent Cloudflare controls shipped
+
+- PR #27 added optional `DOCS_AGENT_GLM_REASONING_EFFORT` and
+  `DOCS_AGENT_GLM_GATEWAY_ID` support to the generic HTTP backend.
+- Gateway routing adds `cf-aig-gateway-id` and disables prompt/response payload
+  retention while preserving metadata. Invalid reasoning-effort values fail
+  closed; unset options preserve the previous payload byte-for-byte.
+- The reusable workflow template maps both optional repository variables.
+- Verification: 35 Node pipeline tests pass; canonical-memory and Vercel gates
+  were green at merge. Crossreview reached its three-round cap with all
+  verified P2/P3 findings fixed.
+
+Re-establish with:
+
+```bash
+node --test pipeline/test/regression.test.mjs
+npm run memory:check
+```
 
 ## 2026-08-11 — Harness-memory conformance (audit FAIL → PASS)
 
