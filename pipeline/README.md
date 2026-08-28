@@ -62,7 +62,10 @@ pipeline prompt sizes). It defaults `max_tokens` to 49152
 budget on thinking before content. Providers that expose the OpenAI
 `reasoning_effort` field can pin it with
 `DOCS_AGENT_GLM_REASONING_EFFORT=low|medium|high`; when unset, the field is
-omitted and provider-default behavior is preserved. A stream that ends with
+omitted and provider-default behavior is preserved. Cloudflare Workers AI can
+route through AI Gateway with `DOCS_AGENT_GLM_GATEWAY_ID`; when set, the
+driver adds the gateway header while disabling prompt/response payload
+retention (metadata remains available). A stream that ends with
 `finish_reason=length` fails the run outright — truncated output is never
 committed.
 

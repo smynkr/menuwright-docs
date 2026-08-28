@@ -96,6 +96,7 @@ const BACKENDS = {
   // Env: DOCS_AGENT_GLM_API_BASE (e.g. https://api.neuralwatt.com/v1),
   //      DOCS_AGENT_GLM_MODEL (e.g. glm-5.2), GLM_API_KEY (Bearer token),
   //      DOCS_AGENT_GLM_REASONING_EFFORT (optional: low | medium | high),
+  //      DOCS_AGENT_GLM_GATEWAY_ID (optional Cloudflare AI Gateway id),
   //      DOCS_AGENT_GLM_MAX_TOKENS (default 49152 — reasoning models spend
   //      their completion budget on thinking BEFORE producing content).
   glm: {
@@ -105,6 +106,7 @@ const BACKENDS = {
     apiKey: process.env.GLM_API_KEY || "",
     maxTokens: Number(process.env.DOCS_AGENT_GLM_MAX_TOKENS || 49152),
     reasoningEffort: process.env.DOCS_AGENT_GLM_REASONING_EFFORT || "",
+    gatewayId: process.env.DOCS_AGENT_GLM_GATEWAY_ID || "",
   },
 };
 
@@ -206,7 +208,8 @@ Env:
   DOCS_AGENT_CLAUDE_CMD / _CODEX_CMD / _GEMINI_CMD (override the CLI binary),
   DOCS_AGENT_CLAUDE_ARGS / _CODEX_ARGS / _GEMINI_ARGS (override invocation flags),
   DOCS_AGENT_TIMEOUT_MS, DOCS_AGENT_MAX_PAGES,
-  DOCS_AGENT_GLM_REASONING_EFFORT (optional: low | medium | high).
+  DOCS_AGENT_GLM_REASONING_EFFORT (optional: low | medium | high),
+  DOCS_AGENT_GLM_GATEWAY_ID (optional Cloudflare AI Gateway id).
   Auth for whichever backend you pick is NOT this script's concern — it assumes
   the CLI on PATH is already authenticated (subscription OAuth locally, or a
   metered API key in hosted CI). See README.md.
@@ -634,6 +637,19 @@ export function parseSSEPayload(text) {
   }
   return { content, reasoningChars, finishReason, sawDone };
 }
+export function buildApiHeaders(backend) {
+  const headers = {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${backend.apiKey}`,
+  };
+  if (backend.gatewayId) {
+    headers["cf-aig-gateway-id"] = backend.gatewayId;
+    headers["cf-aig-collect-log-payload"] = "false";
+  }
+  return headers;
+}
+
+
 
 export function buildApiPayload(backend, prompt) {
   const payload = {
@@ -674,10 +690,7 @@ function runBackend(backendName, prompt, timeoutMs) {
         // completion budget must cover BOTH, hence the large max_tokens.
         const res = await fetch(`${backend.apiBase}/chat/completions`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${backend.apiKey}`,
-          },
+          headers: buildApiHeaders(backend),
           body: JSON.stringify(buildApiPayload(backend, prompt)),
           signal: AbortSignal.timeout(timeoutMs),
         });

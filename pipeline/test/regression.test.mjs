@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { buildApiPayload, parseSSEPayload } from "../docs-agent.mjs";
+import { buildApiHeaders, buildApiPayload, parseSSEPayload } from "../docs-agent.mjs";
 
 const testDir = path.dirname(fileURLToPath(import.meta.url));
 const driverPath = path.resolve(testDir, "..", "docs-agent.mjs");
@@ -534,6 +534,20 @@ test("T11: oversized PR diffs fall back to per-file patches without corruption",
   assert.ok(prompt.includes("arr[i][j]"), "patch content was corrupted");
   assert.ok(prompt.includes("assets/huge-generated-file.bin"), "patch-less file not disclosed to the model");
   assert.ok(prompt.includes("too large for the GitHub API"), "missing incomplete-diff section");
+});
+
+test("API headers route only configured calls through Cloudflare Gateway privately", () => {
+  const base = { apiKey: "secret", gatewayId: "" };
+  assert.deepEqual(buildApiHeaders(base), {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer secret",
+  });
+  assert.deepEqual(buildApiHeaders({ ...base, gatewayId: "default" }), {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer secret",
+    "cf-aig-gateway-id": "default",
+    "cf-aig-collect-log-payload": "false",
+  });
 });
 
 test("API payload includes configured reasoning effort only when set", () => {
