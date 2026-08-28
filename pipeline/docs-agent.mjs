@@ -344,6 +344,14 @@ function destinationGhEnv() {
   delete env.DOCS_AGENT_SOURCE_TOKEN;
   return env;
 }
+
+function destinationGitEnv() {
+  const env = nonGithubChildEnv();
+  for (const key of ["SSH_AUTH_SOCK", "GIT_ASKPASS", "SSH_ASKPASS", "GIT_SSH", "GIT_SSH_COMMAND"]) {
+    if (process.env[key]) env[key] = process.env[key];
+  }
+  return env;
+}
 // ---------------------------------------------------------------------------
 // Step 1: collect + filter the diff
 // ---------------------------------------------------------------------------
@@ -1242,7 +1250,7 @@ function applyChangesAndOpenPR(opts, { fileBlocks, prMeta, backendName, droppedP
   assertGitRepo(opts.docsRepoPath);
   const destinationEnv = destinationGhEnv();
   const baseBranch = resolveBaseBranch(opts, destinationEnv);
-  run("git", ["-C", opts.docsRepoPath, "fetch", "origin", baseBranch], { env: nonGithubChildEnv() });
+  run("git", ["-C", opts.docsRepoPath, "fetch", "origin", baseBranch], { env: destinationGitEnv() });
   const existingPr = runAllowFail("gh", [
     "pr", "list", "--repo", opts.docsRepo, "--head", branchName, "--state", "open", "--json", "number,url",
   ], { env: destinationEnv });
@@ -1333,7 +1341,7 @@ function applyChangesAndOpenPR(opts, { fileBlocks, prMeta, backendName, droppedP
 
   const pushArgs = ["-C", opts.docsRepoPath, "push", "-u", "origin", branchName];
   if (opts.force) pushArgs.push("--force");
-  run("git", pushArgs, { env: nonGithubChildEnv() });
+  run("git", pushArgs, { env: destinationGitEnv() });
 
   if (existingPrJson.length > 0) {
     log(`branch pushed; existing PR updated: ${existingPrJson[0].url}`);
