@@ -4,7 +4,7 @@ category: current-state
 updated: 2026-08-28
 summary: Dated durable facts and their source anchors
 nav_order: 130
-sources: [".codex/harness-memory.json", "README.md", "package.json", "next.config.mjs", "docs.json", "_migration/tools/lib/shared.mjs", "components/brand/products.ts", "public/logo.svg"]
+sources: [".codex/harness-memory.json", "README.md", "package.json", "next.config.mjs", "docs.json", "_migration/tools/lib/shared.mjs", "components/brand/products.ts", "public/logo.svg", "pipeline/docs-agent.mjs", "pipeline/docs-agent.yml", "pipeline/test/regression.test.mjs"]
 ---
 
 # Durable ledger
@@ -12,7 +12,7 @@ sources: [".codex/harness-memory.json", "README.md", "package.json", "next.confi
 
 ## 2026-08-28 — Docs-agent Cloudflare controls shipped
 
-- PR #27 added optional `DOCS_AGENT_GLM_REASONING_EFFORT` and
+- `menuwright-docs` PR #27 added optional `DOCS_AGENT_GLM_REASONING_EFFORT` and
   `DOCS_AGENT_GLM_GATEWAY_ID` support to the generic HTTP backend.
 - Gateway routing adds `cf-aig-gateway-id` and disables prompt/response payload
   retention while preserving metadata. Invalid reasoning-effort values fail

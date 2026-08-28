@@ -4,7 +4,7 @@ category: current-state
 updated: 2026-08-28
 summary: Current repository-owned topology and content boundary
 nav_order: 20
-sources: ["README.md", "package.json", "next.config.mjs", "docs.json", "_migration/tools/lib/shared.mjs", "app/(home)/page.tsx", "menuwright/index.mdx"]
+sources: ["README.md", "package.json", "next.config.mjs", "docs.json", "_migration/tools/lib/shared.mjs", "app/(home)/page.tsx", "menuwright/index.mdx", "pipeline/docs-agent.mjs", "pipeline/docs-agent.yml", "pipeline/test/regression.test.mjs"]
 ---
 
 # Current state
