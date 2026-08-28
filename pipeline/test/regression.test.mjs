@@ -418,6 +418,7 @@ test("non-GitHub child environments remove all repository credentials and config
     GIT_CONFIG_VALUE_7: "cache",
     GIT_CONFIG_PARAMETERS: "credential.helper=store",
     GIT_CONFIG_GLOBAL: "/tmp/credentials",
+    SSH_AUTH_SOCK: "/tmp/ssh-agent.sock",
   });
   assert.equal(scrubbed.PATH, "/usr/bin");
   for (const key of [
@@ -432,6 +433,7 @@ test("non-GitHub child environments remove all repository credentials and config
     "GIT_CONFIG_VALUE_7",
     "GIT_CONFIG_PARAMETERS",
     "GIT_CONFIG_GLOBAL",
+    "SSH_AUTH_SOCK",
   ]) {
     assert.equal(scrubbed[key], undefined, `${key} must not reach a non-GitHub child`);
   }
