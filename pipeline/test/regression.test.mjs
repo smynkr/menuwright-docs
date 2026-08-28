@@ -6,11 +6,16 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import {
+  CLOUDFLARE_GLM_53_MODEL,
+  GLM_PROVIDER_DEFAULTS,
+  GLM_REASONING_EFFORTS,
   backendReceiptLabel,
   buildApiHeaders,
   buildApiRequestBody,
+  nonGithubChildEnv,
   parseSSEPayload,
   retryAfterDelayMs,
+  validateCloudflareGlm53Config,
   validateGlmReasoningEffort,
 } from "../docs-agent.mjs";
 
@@ -57,6 +62,9 @@ function setupSandbox({
   const docsRepo = path.join(root, "docs");
   const backendOutputPath = path.join(root, "backend-output.txt");
   const ghLogPath = path.join(root, "gh.log");
+  const backendEnvLogPath = path.join(root, "backend-env.log");
+  const migrationEnvLogPath = path.join(root, "migration-env.log");
+  const prBodyPath = path.join(root, "pr-body.md");
   const backendPath = path.join(binDir, "backend-stub.mjs");
   const ghPath = path.join(binDir, "gh");
 
@@ -65,7 +73,25 @@ function setupSandbox({
   writeExecutable(
     backendPath,
     `#!/usr/bin/env node
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
+const credentialKeys = [
+  "DOCS_AGENT_SOURCE_TOKEN",
+  "GH_TOKEN",
+  "GITHUB_TOKEN",
+  "DOCS_REPO_PAT",
+  "GIT_CONFIG_COUNT",
+  "GIT_CONFIG_KEY_0",
+  "GIT_CONFIG_VALUE_0",
+  "GIT_CONFIG_PARAMETERS",
+];
+if (process.env.DOCS_AGENT_BACKEND_ENV_LOG) {
+  const env = Object.fromEntries(credentialKeys.filter((key) => process.env[key] !== undefined).map((key) => [key, process.env[key]]));
+  writeFileSync(
+    process.env.DOCS_AGENT_BACKEND_ENV_LOG,
+    JSON.stringify({ args: process.argv.slice(2), env }) + "\\n",
+    { flag: "a" },
+  );
+}
 if (process.argv.includes("--version")) process.exit(0);
 process.stdin.resume();
 process.stdin.on("end", () => process.stdout.write(readFileSync(process.env.DOCS_AGENT_STUB_OUTPUT_FILE, "utf8")));
@@ -101,6 +127,9 @@ if [ "$1" = "pr" ] && [ "$2" = "list" ]; then
   exit 0
 fi
 if [ "$1" = "pr" ] && [ "$2" = "create" ]; then
+  if [ "\${11}" = "--body-file" ] && [ -n "$DOCS_AGENT_PR_BODY_CAPTURE" ]; then
+    cat "\${12}" > "$DOCS_AGENT_PR_BODY_CAPTURE"
+  fi
   echo "https://example.test/docs/pull/1"
   exit 0
 fi
@@ -171,9 +200,23 @@ exit 1
   writeFileSync(
     path.join(migrationDir, "run-migration.mjs"),
     `#!/usr/bin/env node
-import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, statSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+const credentialKeys = [
+  "DOCS_AGENT_SOURCE_TOKEN",
+  "GH_TOKEN",
+  "GITHUB_TOKEN",
+  "DOCS_REPO_PAT",
+  "GIT_CONFIG_COUNT",
+  "GIT_CONFIG_KEY_0",
+  "GIT_CONFIG_VALUE_0",
+  "GIT_CONFIG_PARAMETERS",
+];
+if (process.env.DOCS_AGENT_MIGRATION_ENV_LOG) {
+  const env = Object.fromEntries(credentialKeys.filter((key) => process.env[key] !== undefined).map((key) => [key, process.env[key]]));
+  writeFileSync(process.env.DOCS_AGENT_MIGRATION_ENV_LOG, JSON.stringify(env), "utf8");
+}
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const dest = path.join(repoRoot, "content", "docs");
 rmSync(dest, { recursive: true, force: true });
@@ -222,6 +265,9 @@ console.log(JSON.stringify({ stub: true, destination: dest }));
     docsRemote,
     docsRepo,
     ghLogPath,
+    backendEnvLogPath,
+    migrationEnvLogPath,
+    prBodyPath,
     sourceRepo,
     logDir: path.join(root, "logs"),
     run({ prMode = false } = {}) {
@@ -243,8 +289,17 @@ console.log(JSON.stringify({ stub: true, destination: dest }));
             ...process.env,
             DOCS_AGENT_SOURCE_TOKEN: "source-token",
             GH_TOKEN: "destination-token",
+            GITHUB_TOKEN: "github-token",
+            DOCS_REPO_PAT: "docs-repo-pat",
+            GIT_CONFIG_COUNT: "1",
+            GIT_CONFIG_KEY_0: "credential.helper",
+            GIT_CONFIG_VALUE_0: "store",
+            GIT_CONFIG_PARAMETERS: "credential.helper=store",
             DOCS_AGENT_CLAUDE_CMD: backendPath,
             DOCS_AGENT_GH_LOG: ghLogPath,
+            DOCS_AGENT_BACKEND_ENV_LOG: backendEnvLogPath,
+            DOCS_AGENT_MIGRATION_ENV_LOG: migrationEnvLogPath,
+            DOCS_AGENT_PR_BODY_CAPTURE: prBodyPath,
             DOCS_AGENT_LOG_DIR: path.join(root, "logs"),
             DOCS_AGENT_STUB_OUTPUT_FILE: backendOutputPath,
             DOCS_AGENT_STUB_DEFAULT_BRANCH: defaultBranch,
@@ -326,8 +381,61 @@ test("T2: changed content writes the flat source, regenerates content/docs, and 
     "pr create",
   ]);
   assert.match(calls.at(-1), /--base main/);
+  const backendEnvRecords = readFileSync(sandbox.backendEnvLogPath, "utf8")
+    .trim()
+    .split("\n")
+    .filter(Boolean)
+    .map((line) => JSON.parse(line));
+  assert.equal(backendEnvRecords.length, 2, "version probe and backend invocation must both be observed");
+  for (const record of backendEnvRecords) {
+    assert.deepEqual(record.env, {}, `backend received GitHub credentials: ${JSON.stringify(record)}`);
+  }
+  assert.deepEqual(
+    JSON.parse(readFileSync(sandbox.migrationEnvLogPath, "utf8")),
+    {},
+    "migration tooling must not receive GitHub credentials",
+  );
+  const prBody = readFileSync(sandbox.prBodyPath, "utf8");
+  assert.match(
+    prBody,
+    /backend: \*\*claude\*\* \(command: `[^`]+ -p --output-format text`\)/,
+    "generated PR body must include the resolved backend receipt",
+  );
 });
 
+
+test("non-GitHub child environments remove all repository credentials and config injection", () => {
+  const scrubbed = nonGithubChildEnv({
+    PATH: "/usr/bin",
+    DOCS_AGENT_SOURCE_TOKEN: "source-token",
+    GH_TOKEN: "gh-token",
+    GITHUB_TOKEN: "github-token",
+    DOCS_REPO_PAT: "docs-pat",
+    GIT_CONFIG_COUNT: "1",
+    GIT_CONFIG_KEY_0: "credential.helper",
+    GIT_CONFIG_VALUE_0: "store",
+    GIT_CONFIG_KEY_7: "credential.helper",
+    GIT_CONFIG_VALUE_7: "cache",
+    GIT_CONFIG_PARAMETERS: "credential.helper=store",
+    GIT_CONFIG_GLOBAL: "/tmp/credentials",
+  });
+  assert.equal(scrubbed.PATH, "/usr/bin");
+  for (const key of [
+    "DOCS_AGENT_SOURCE_TOKEN",
+    "GH_TOKEN",
+    "GITHUB_TOKEN",
+    "DOCS_REPO_PAT",
+    "GIT_CONFIG_COUNT",
+    "GIT_CONFIG_KEY_0",
+    "GIT_CONFIG_VALUE_0",
+    "GIT_CONFIG_KEY_7",
+    "GIT_CONFIG_VALUE_7",
+    "GIT_CONFIG_PARAMETERS",
+    "GIT_CONFIG_GLOBAL",
+  ]) {
+    assert.equal(scrubbed[key], undefined, `${key} must not reach a non-GitHub child`);
+  }
+});
 test("T9: memory-manifest regeneration failure aborts the draft (fail closed)", (t) => {
   const changedContent = "# Reference\n\nUpdated again.\n";
   const sandbox = setupSandbox({
@@ -575,6 +683,32 @@ test("GLM backend resolves the Cloudflare 5.3 Flash default model", () => {
   assert.match(result.stdout, /model: `@cf\/zai-org\/glm-5\.3-flash`/);
 });
 
+test("exact Cloudflare GLM model always enters the fail-closed account/base gate", () => {
+  const backend = { model: CLOUDFLARE_GLM_53_MODEL, apiBase: "https://generic.example/v1" };
+  const missingAccount = validateCloudflareGlm53Config(backend, {
+    accountId: "",
+    apiBase: backend.apiBase,
+  });
+  assert.equal(missingAccount.cloudflareMode, true);
+  assert.match(missingAccount.error, /CLOUDFLARE_ACCOUNT_ID/);
+
+  const accountId = "a".repeat(32);
+  const staleBase = validateCloudflareGlm53Config(backend, {
+    accountId,
+    apiBase: "https://api.cloudflare.com/client/v4/accounts/stale/ai/v1",
+  });
+  assert.equal(staleBase.cloudflareMode, true);
+  assert.match(staleBase.error, /exactly the Cloudflare account endpoint/);
+
+  assert.deepEqual(
+    validateCloudflareGlm53Config(backend, {
+      accountId,
+      apiBase: `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/v1`,
+    }),
+    { cloudflareMode: true, error: null },
+  );
+});
+
 const TASK1_PROVIDER_BODY = Object.freeze({
   model: "@cf/zai-org/glm-5.3-flash",
   messages: [{ role: "user", content: "prompt" }],
@@ -597,18 +731,20 @@ function normalizeProviderBody(body) {
 
 test("normalized GLM provider body matches the Task 1 Cloudflare contract", () => {
   const backend = {
-    model: "@cf/zai-org/glm-5.3-flash",
-    maxTokens: 49152,
-    reasoningEffort: "high",
+    model: GLM_PROVIDER_DEFAULTS.model,
+    maxTokens: GLM_PROVIDER_DEFAULTS.maxTokens,
+    reasoningEffort: GLM_PROVIDER_DEFAULTS.reasoningEffort,
   };
   assert.deepEqual(
     normalizeProviderBody(buildApiRequestBody(backend, "prompt", true)),
     TASK1_PROVIDER_BODY,
   );
-  assert.equal(
-    buildApiRequestBody({ ...backend, reasoningEffort: "low" }, "prompt", true).reasoning_effort,
-    "low",
-  );
+  for (const reasoningEffort of GLM_REASONING_EFFORTS) {
+    assert.equal(
+      buildApiRequestBody({ ...backend, reasoningEffort }, "prompt", true).reasoning_effort,
+      reasoningEffort,
+    );
+  }
 
   const cloudflare52 = buildApiRequestBody(
     { ...backend, model: "@cf/zai-org/glm-5.2" },
@@ -622,8 +758,8 @@ test("normalized GLM provider body matches the Task 1 Cloudflare contract", () =
 
 test("GLM reasoning validation is limited to exact Cloudflare GLM-5.3-Flash", () => {
   const backend = {
-    model: "@cf/zai-org/glm-5.3-flash",
-    reasoningEffort: "high",
+    model: GLM_PROVIDER_DEFAULTS.model,
+    reasoningEffort: GLM_PROVIDER_DEFAULTS.reasoningEffort,
     reasoningEffortEnv: "DOCS_AGENT_GLM_REASONING_EFFORT",
   };
   for (const value of ["", "none", "max", "xhigh", "HIGH"]) {
@@ -636,6 +772,9 @@ test("GLM reasoning validation is limited to exact Cloudflare GLM-5.3-Flash", ()
     validateGlmReasoningEffort({ ...backend, model: "@cf/zai-org/glm-5.2" }, true, "bogus"),
     null,
   );
+  for (const value of GLM_REASONING_EFFORTS) {
+    assert.equal(validateGlmReasoningEffort(backend, true, value), null);
+  }
   assert.equal(validateGlmReasoningEffort(backend, false, "bogus"), null);
 });
 
@@ -656,6 +795,7 @@ const TASK1_WORKFLOW_PROVIDER_FIXTURE = Object.freeze({
   model: "DOCS_AGENT_GLM_MODEL: ${{ vars.DOCS_AGENT_GLM_MODEL }}",
   maxTokens: "DOCS_AGENT_GLM_MAX_TOKENS: ${{ vars.DOCS_AGENT_GLM_MAX_TOKENS }}",
   reasoning: "DOCS_AGENT_GLM_REASONING_EFFORT: ${{ vars.DOCS_AGENT_GLM_REASONING_EFFORT || 'high' }}",
+  gateway: "DOCS_AGENT_GLM_GATEWAY_ID: ${{ vars.DOCS_AGENT_GLM_GATEWAY_ID }}",
 });
 
 function normalizeWorkflowFixtureLine(line) {
@@ -670,7 +810,6 @@ test("normalized hosted workflow provider block matches Task 1 without changing 
   }
   assert.match(template, /name:\s+hosted \(GLM 5\.2 — drafts doc update\)/);
   assert.match(template, /name:\s+Run docs-agent with GLM 5\.2/);
-  assert.match(template, /DOCS_AGENT_GLM_GATEWAY_ID/);
   assert.doesNotMatch(template, /secrets\.GLM_API_KEY/);
 });
 

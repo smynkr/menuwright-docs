@@ -42,8 +42,15 @@ import { fileURLToPath } from "node:url";
 // Config / constants
 // ---------------------------------------------------------------------------
 
-const CLOUDFLARE_GLM_53_MODEL = "@cf/zai-org/glm-5.3-flash";
-const VALID_GLM_REASONING_EFFORTS = new Set(["low", "medium", "high"]);
+export const CLOUDFLARE_GLM_53_MODEL = "@cf/zai-org/glm-5.3-flash";
+const GLM_DEFAULT_MAX_TOKENS = 49152;
+export const GLM_PROVIDER_DEFAULTS = Object.freeze({
+  model: CLOUDFLARE_GLM_53_MODEL,
+  maxTokens: GLM_DEFAULT_MAX_TOKENS,
+  reasoningEffort: "high",
+});
+export const GLM_REASONING_EFFORTS = Object.freeze(["low", "medium", "high"]);
+const VALID_GLM_REASONING_EFFORTS = new Set(GLM_REASONING_EFFORTS);
 
 const PRODUCTS = ["layer", "overwatch", "locus", "routeshift", "codex", "invest"];
 
@@ -107,12 +114,12 @@ const BACKENDS = {
     type: "api",
     apiBase: (process.env.DOCS_AGENT_GLM_API_BASE || "").replace(/\/+$/, ""),
     apiBaseEnv: "DOCS_AGENT_GLM_API_BASE",
-    model: process.env.DOCS_AGENT_GLM_MODEL || CLOUDFLARE_GLM_53_MODEL,
-    reasoningEffort: process.env.DOCS_AGENT_GLM_REASONING_EFFORT || "high",
+    model: process.env.DOCS_AGENT_GLM_MODEL || GLM_PROVIDER_DEFAULTS.model,
+    reasoningEffort: process.env.DOCS_AGENT_GLM_REASONING_EFFORT || GLM_PROVIDER_DEFAULTS.reasoningEffort,
     reasoningEffortEnv: "DOCS_AGENT_GLM_REASONING_EFFORT",
     apiKey: process.env.GLM_API_KEY || "",
     apiKeyEnv: "GLM_API_KEY",
-    maxTokens: Number(process.env.DOCS_AGENT_GLM_MAX_TOKENS || 49152),
+    maxTokens: Number(process.env.DOCS_AGENT_GLM_MAX_TOKENS || GLM_PROVIDER_DEFAULTS.maxTokens),
     maxTokensEnv: "DOCS_AGENT_GLM_MAX_TOKENS",
     gatewayId: process.env.DOCS_AGENT_GLM_GATEWAY_ID || "",
   },
@@ -273,8 +280,29 @@ function matchesAnyGlob(filePath, globs) {
 // shell helpers
 // ---------------------------------------------------------------------------
 
+const GITHUB_CREDENTIAL_ENV_KEYS = new Set([
+  "DOCS_AGENT_SOURCE_TOKEN",
+  "GH_TOKEN",
+  "GITHUB_TOKEN",
+  "DOCS_REPO_PAT",
+]);
+const GIT_CONFIG_ENV_RE = /^GIT_CONFIG(?:_|$)/;
+
+// GitHub credentials are intentionally available only to the gh calls that
+// need them. Every other child process receives a fresh environment with
+// GitHub tokens and Git config injection controls removed.
+export function nonGithubChildEnv(baseEnv = process.env) {
+  const env = { ...baseEnv };
+  for (const key of Object.keys(env)) {
+    if (GITHUB_CREDENTIAL_ENV_KEYS.has(key) || GIT_CONFIG_ENV_RE.test(key)) {
+      delete env[key];
+    }
+  }
+  return env;
+}
+
 function run(cmd, args, opts = {}) {
-  const res = spawnSync(cmd, args, { encoding: "utf8", ...opts });
+  const res = spawnSync(cmd, args, { encoding: "utf8", env: nonGithubChildEnv(), ...opts });
   if (res.error) fail(`failed to run \`${cmd} ${args.join(" ")}\`: ${res.error.message}`);
   if (res.status !== 0 && !opts.allowFail) {
     fail(`\`${cmd} ${args.join(" ")}\` exited ${res.status}\n--- stderr ---\n${res.stderr}`);
@@ -283,7 +311,7 @@ function run(cmd, args, opts = {}) {
 }
 
 function runAllowFail(cmd, args, opts = {}) {
-  return spawnSync(cmd, args, { encoding: "utf8", ...opts });
+  return spawnSync(cmd, args, { encoding: "utf8", env: nonGithubChildEnv(), ...opts });
 }
 
 // Source PR reads and destination docs-repo operations use separate tokens.
@@ -702,6 +730,42 @@ export function retryAfterDelayMs(headers, nowMs = Date.now()) {
   return DEFAULT_GLM_RETRY_DELAY_MS;
 }
 
+export function validateCloudflareGlm53Config(
+  backend,
+  {
+    accountId = process.env.CLOUDFLARE_ACCOUNT_ID || "",
+    apiBase = backend.apiBase,
+  } = {},
+) {
+  let apiBaseHostname = "";
+  try {
+    apiBaseHostname = new URL(apiBase || "").hostname;
+  } catch {
+    // A malformed generic URL is reported by fetch; Cloudflare mode still
+    // fails closed when the model/account/base identify a Cloudflare route.
+  }
+
+  const cloudflareMode =
+    backend.model === CLOUDFLARE_GLM_53_MODEL ||
+    accountId !== "" ||
+    apiBaseHostname === "api.cloudflare.com";
+  if (!cloudflareMode) return { cloudflareMode: false, error: null };
+  if (!/^[0-9a-f]{32}$/.test(accountId)) {
+    return {
+      cloudflareMode: true,
+      error: "CLOUDFLARE_ACCOUNT_ID must be 32 lowercase hexadecimal characters",
+    };
+  }
+  const expectedApiBase = `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/v1`;
+  if (apiBase !== expectedApiBase) {
+    return {
+      cloudflareMode: true,
+      error: "DOCS_AGENT_GLM_API_BASE must be exactly the Cloudflare account endpoint",
+    };
+  }
+  return { cloudflareMode: true, error: null };
+}
+
 function isCloudflareGlm53Mode(backend, cloudflareMode) {
   return Boolean(cloudflareMode && backend.model === CLOUDFLARE_GLM_53_MODEL);
 }
@@ -762,24 +826,9 @@ function runBackend(backendName, prompt, timeoutMs) {
     }
     let cloudflareMode = false;
     if (backendName === "glm") {
-      const accountId = process.env.CLOUDFLARE_ACCOUNT_ID || "";
-      let apiBaseHostname = "";
-      try {
-        apiBaseHostname = new URL(backend.apiBase).hostname;
-      } catch {
-        // A malformed generic URL will fail at fetch; Cloudflare mode below
-        // still fails closed when an account ID was supplied.
-      }
-      cloudflareMode = accountId !== "" || apiBaseHostname === "api.cloudflare.com";
-      if (cloudflareMode) {
-        if (!/^[0-9a-f]{32}$/.test(accountId)) {
-          fail("CLOUDFLARE_ACCOUNT_ID must be 32 lowercase hexadecimal characters");
-        }
-        const expectedApiBase = `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/v1`;
-        if (backend.apiBase !== expectedApiBase) {
-          fail("DOCS_AGENT_GLM_API_BASE must be exactly the Cloudflare account endpoint");
-        }
-      }
+      const cloudflareConfig = validateCloudflareGlm53Config(backend);
+      cloudflareMode = cloudflareConfig.cloudflareMode;
+      if (cloudflareConfig.error) fail(cloudflareConfig.error);
       const reasoningError = validateGlmReasoningEffort(
         backend,
         cloudflareMode,
@@ -895,7 +944,7 @@ function runBackend(backendName, prompt, timeoutMs) {
   }
 
   // --- CLI backend (spawn a subprocess) ---
-  const check = runAllowFail(backend.cmd, ["--version"]);
+  const check = runAllowFail(backend.cmd, ["--version"], { env: nonGithubChildEnv() });
   if (check.error) {
     fail(
       `backend CLI "${backend.cmd}" was not found on PATH (${check.error.message}). ` +
@@ -908,7 +957,7 @@ function runBackend(backendName, prompt, timeoutMs) {
   return new Promise((resolve) => {
     // Backends with stdin=false receive the prompt as a trailing argument.
     const spawnArgs = backend.stdin ? backend.args : [...backend.args, prompt];
-    const child = spawn(backend.cmd, spawnArgs, { stdio: ["pipe", "pipe", "pipe"] });
+    const child = spawn(backend.cmd, spawnArgs, { env: nonGithubChildEnv(), stdio: ["pipe", "pipe", "pipe"] });
     let stdout = "";
     let stderr = "";
     let timedOut = false;
@@ -1188,7 +1237,7 @@ function applyChangesAndOpenPR(opts, { fileBlocks, prMeta, backendName, droppedP
   assertGitRepo(opts.docsRepoPath);
   const destinationEnv = destinationGhEnv();
   const baseBranch = resolveBaseBranch(opts, destinationEnv);
-  run("git", ["-C", opts.docsRepoPath, "fetch", "origin", baseBranch], { env: destinationEnv });
+  run("git", ["-C", opts.docsRepoPath, "fetch", "origin", baseBranch], { env: nonGithubChildEnv() });
   const existingPr = runAllowFail("gh", [
     "pr", "list", "--repo", opts.docsRepo, "--head", branchName, "--state", "open", "--json", "number,url",
   ], { env: destinationEnv });
@@ -1205,7 +1254,7 @@ function applyChangesAndOpenPR(opts, { fileBlocks, prMeta, backendName, droppedP
     );
   }
 
-  run("git", ["-C", opts.docsRepoPath, "checkout", "-B", branchName, `origin/${baseBranch}`], { env: destinationEnv });
+  run("git", ["-C", opts.docsRepoPath, "checkout", "-B", branchName, `origin/${baseBranch}`], { env: nonGithubChildEnv() });
   // Re-check after checkout: `checkout -B` carries pre-existing edits and
   // untracked leftovers across, and this run must commit only its own work —
   // never an operator's in-progress pages or a previous failed run's residue.
@@ -1263,9 +1312,9 @@ function applyChangesAndOpenPR(opts, { fileBlocks, prMeta, backendName, droppedP
       if (existsSync(path.join(opts.docsRepoPath, generated))) pathspecs.push(generated);
     }
   }
-  run("git", ["-C", opts.docsRepoPath, "add", "--", ...pathspecs], { env: destinationEnv });
+  run("git", ["-C", opts.docsRepoPath, "add", "--", ...pathspecs], { env: nonGithubChildEnv() });
 
-  const diffCheck = runAllowFail("git", ["-C", opts.docsRepoPath, "diff", "--cached", "--quiet"], { env: destinationEnv });
+  const diffCheck = runAllowFail("git", ["-C", opts.docsRepoPath, "diff", "--cached", "--quiet"], { env: nonGithubChildEnv() });
   if (diffCheck.status === 0) {
     log("staged diff is empty after `git add` (should not happen given the pre-check above). No-op, not opening a PR.");
     return { opened: false };
@@ -1275,11 +1324,11 @@ function applyChangesAndOpenPR(opts, { fileBlocks, prMeta, backendName, droppedP
     `docs: sync ${opts.product} docs for ${opts.repo}${prMeta.number != null ? ` PR #${prMeta.number}` : ""}\n\n` +
     `Drafted by docs-agent (${backendName} backend). Source: ${prMeta.url || opts.range}\n` +
     `Human review required before merge.`;
-  run("git", ["-C", opts.docsRepoPath, "commit", "-m", commitMsg], { env: destinationEnv });
+  run("git", ["-C", opts.docsRepoPath, "commit", "-m", commitMsg], { env: nonGithubChildEnv() });
 
   const pushArgs = ["-C", opts.docsRepoPath, "push", "-u", "origin", branchName];
   if (opts.force) pushArgs.push("--force");
-  run("git", pushArgs, { env: destinationEnv });
+  run("git", pushArgs, { env: nonGithubChildEnv() });
 
   if (existingPrJson.length > 0) {
     log(`branch pushed; existing PR updated: ${existingPrJson[0].url}`);
@@ -1287,7 +1336,7 @@ function applyChangesAndOpenPR(opts, { fileBlocks, prMeta, backendName, droppedP
   }
 
   const bodyLines = [
-    `Drafted automatically by \`docs-agent.mjs\` (backend: **${backendName}**).`,
+    `Drafted automatically by \`docs-agent.mjs\` (${backendReceiptLabel(backendName)}).`,
     "",
     `Source PR: ${prMeta.url || `local range ${opts.range}`}`,
     prMeta.title ? `Source title: ${prMeta.title}` : "",
@@ -1364,7 +1413,7 @@ function resolveBaseBranch(opts, destinationEnv = destinationGhEnv()) {
 
   const viaOriginHead = runAllowFail("git", [
     "-C", opts.docsRepoPath, "symbolic-ref", "--short", "refs/remotes/origin/HEAD",
-  ], { env: destinationEnv });
+  ], { env: nonGithubChildEnv() });
   if (viaOriginHead.status === 0) {
     const ref = viaOriginHead.stdout.trim();
     const name = ref.replace(/^origin\//, "");
@@ -1437,7 +1486,7 @@ function regenerateGeneratedOutput(docsRepoPath) {
     );
   }
   log("regenerating content/docs + meta.json from canonical flat sources...");
-  const res = runAllowFail(process.execPath, [migrationScript], { cwd: docsRepoPath });
+  const res = runAllowFail(process.execPath, [migrationScript], { cwd: docsRepoPath, env: nonGithubChildEnv() });
   if (res.status !== 0) {
     fail(
       `content/docs regeneration failed (exit ${res.status}). The canonical edits were written ` +
@@ -1461,7 +1510,7 @@ function regenerateMemoryManifest(docsRepoPath) {
     log("no docs/wiki/_sources.json or docs/AGENT_SOT.md in this checkout; skipping memory-manifest regeneration.");
     return false;
   }
-  const res = runAllowFail("npm", ["run", "memory:generate"], { cwd: docsRepoPath });
+  const res = runAllowFail("npm", ["run", "memory:generate"], { cwd: docsRepoPath, env: nonGithubChildEnv() });
   if (res.status !== 0) {
     // Fail closed: a PR whose canonical edits leave the memory manifests
     // stale fails the docs repo's memory gate on arrival, so opening it just
