@@ -549,6 +549,10 @@ test("API payload includes configured reasoning effort only when set", () => {
     buildApiPayload({ ...base, reasoningEffort: "low" }, "prompt").reasoning_effort,
     "low",
   );
+  assert.throws(
+    () => buildApiPayload({ ...base, reasoningEffort: "bogus" }, "prompt"),
+    /invalid DOCS_AGENT_GLM_REASONING_EFFORT/,
+  );
 });
 
 test("SSE payload parsing survives provider quirks and truncation signals", async (t) => {

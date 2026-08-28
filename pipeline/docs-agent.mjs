@@ -205,7 +205,8 @@ Env:
   DOCS_AGENT_BACKEND, DOCS_AGENT_DOCS_REPO, DOCS_AGENT_DOCS_PATH,
   DOCS_AGENT_CLAUDE_CMD / _CODEX_CMD / _GEMINI_CMD (override the CLI binary),
   DOCS_AGENT_CLAUDE_ARGS / _CODEX_ARGS / _GEMINI_ARGS (override invocation flags),
-  DOCS_AGENT_TIMEOUT_MS, DOCS_AGENT_MAX_PAGES.
+  DOCS_AGENT_TIMEOUT_MS, DOCS_AGENT_MAX_PAGES,
+  DOCS_AGENT_GLM_REASONING_EFFORT (optional: low | medium | high).
   Auth for whichever backend you pick is NOT this script's concern — it assumes
   the CLI on PATH is already authenticated (subscription OAuth locally, or a
   metered API key in hosted CI). See README.md.
