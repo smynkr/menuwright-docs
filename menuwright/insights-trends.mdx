@@ -25,7 +25,7 @@ The summary row shows:
 
 - **Bundle Opportunities** — the number of bundle combinations identified.
 - **Cannibalization Risks** — the number of high-risk pairs, followed by the total number of pairs found.
-- **Revenue Trend** — the weekly growth rate when a trend is available. If there is not enough data, the card shows `--` and says that more data is needed.
+- **Revenue Trend** — the weekly growth rate when a trend is available. If there is not enough data, the card shows `--` with a **Run an analysis** link that takes you to onboarding.
 
 ### Bundle opportunities
 
@@ -61,6 +61,8 @@ The **Forecast** tab combines several views:
 - **Monthly Seasonality** shows the same type of revenue index by month.
 - **Item Trends** lists items with the strongest revenue changes, including direction (up, down, or flat), weekly growth percentage, and the number of data points.
 
+Each forecast chart includes a collapsible data table — **View the revenue forecast data table**, **View the day-of-week data table**, or **View the monthly data table** — that restates the charted values as text, so the numbers remain readable with a screen reader or when you want exact figures instead of reading them off the chart.
+
 If there is not enough historical data, the forecast tab says so and suggests importing more sales data or running more analyses over time.
 
 ## Trends
@@ -69,7 +71,7 @@ Open **Trends** to review historical performance across menu analyses. MenuWrigh
 
 ### No analysis history
 
-With no analyses, Trends asks you to run your first analysis and links back to onboarding.
+With no analyses, Trends asks you to run your first analysis, notes that menu data is the missing input for this view, and links back to onboarding.
 
 ### One analysis
 
@@ -83,7 +85,7 @@ With one analysis record, regardless of whether its status is completed, pending
 With at least two analyses, Trends displays:
 
 - **Revenue and Margin Over Time** — total revenue for each analysis and average contribution margin when margin data is available. The margin series is omitted when no analysis has margin data.
-- **Analysis History** — the analysis date, analyzed period, item count, total revenue, and status.
+- **Analysis History** — the analysis date, analyzed period, item count, total revenue, average contribution margin (shown as **Not available** when an analysis has no margin data), and status.
 
 Analysis statuses are displayed as returned by the analysis history. Completed statuses are shown as completed; pending and other statuses remain visible so you can distinguish unfinished work from completed analyses.
 
@@ -104,3 +106,4 @@ An empty state can mean that the prerequisite analysis or historical data does n
     Receive recurring email and PDF versions of your analysis.
   </Card>
 </Cards>
+
