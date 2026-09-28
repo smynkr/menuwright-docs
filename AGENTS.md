@@ -48,5 +48,5 @@ memory surfaces with `npm run memory:generate`; never hand-edit
 
 ## Linux CI runner
 
-Existing Linux GitHub Actions jobs use the runner selector `[self-hosted, axiom-cloudflare-ubuntu-2404]`. They require an isolated Cloudflare Ubuntu 24.04 runner to be provisioned, registered with both labels, and online. Repository workflows do not provision the runner.
+Existing Linux GitHub Actions jobs use the runner selector `[self-hosted, axiom-cloudflare-ubuntu-2404]`. They require an isolated, ephemeral one-job Cloudflare microVM running Ubuntu 24.04 amd64, with runner version 2.337.0 and a Docker daemon inside the VM. Provision the runner, register it with both labels, and keep it online; repository workflows do not provision it.
 
