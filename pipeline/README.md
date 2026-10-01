@@ -55,19 +55,29 @@ root (`layer/`, `overwatch/`, `locus/`, `routeshift/`, `codex/`, `invest/`);
    hardcoded `main` once silently killed every draft PR against this repo's
    `master`; the detection now fails loud instead of guessing.
 
-Backend notes: the `glm` backend supports any OpenAI-compatible HTTP endpoint
-and always streams (`stream:true` — non-streaming 524s were observed at
-pipeline prompt sizes). It defaults `max_tokens` to 49152
-(`DOCS_AGENT_GLM_MAX_TOKENS`), because reasoning models spend the completion
-budget on thinking before content. Providers that expose the OpenAI
-`reasoning_effort` field can pin it with
-`DOCS_AGENT_GLM_REASONING_EFFORT=low|medium|high`; when unset, the field is
-omitted and provider-default behavior is preserved. Cloudflare Workers AI can
-route through AI Gateway with `DOCS_AGENT_GLM_GATEWAY_ID`; when set, the
-driver adds the gateway header while disabling prompt/response payload
-retention (metadata remains available). A stream that ends with
-`finish_reason=length` fails the run outright — truncated output is never
-committed.
+Backend notes: the `glm` backend uses the z.ai GLM Coding Plan
+OpenAI-compatible endpoint, defaulting to `https://api.z.ai/api/coding/paas/v4`
+and `glm-5.3-flash`. Override `DOCS_AGENT_GLM_API_BASE` and
+`DOCS_AGENT_GLM_MODEL` for any generic OpenAI-compatible endpoint/model.
+`GLM_API_KEY` is required; the hosted template maps the `ZAI_API_KEY` secret.
+Every GLM request pins `DOCS_AGENT_GLM_REASONING_EFFORT` to `low`, `medium`,
+`high`, or `max` (default `high`); invalid effort fails before a provider request.
+Streaming and `DOCS_AGENT_GLM_MAX_TOKENS` (default 49152) remain unchanged.
+Both `reasoning` and `reasoning_content` stream fields are supported.
+`finish_reason=length`, other non-stop finish reasons, and invalid parsed
+output fail the run.
+
+Optional OpenRouter fallback is off unless all three settings are non-empty:
+`DOCS_AGENT_GLM_FALLBACK_API_BASE` (e.g. `https://openrouter.ai/api/v1`),
+`DOCS_AGENT_GLM_FALLBACK_MODEL` (e.g. `z-ai/glm-5.3-flash`), and
+`GLM_FALLBACK_API_KEY` (mapped from secret `OPENROUTER_API_KEY` by the template).
+The primary retains its one bounded 429 retry. Eligible authentication,
+timeout, network, quota, 5xx, and incomplete-stream failures then allow one
+fallback request within the remaining overall timeout. Deterministic request
+errors (400, 422, and other 4xx without an explicit quota/usage-limit signal), length truncation, and
+invalid output do not trigger fallback. The fallback pins the same effort,
+mapping `max` to `xhigh` only for host `openrouter.ai`. Logs and PR receipts
+identify the actual serving host and model; neither includes API keys.
 
 ## Weekly recap (the durable fix for fabricated changelogs)
 

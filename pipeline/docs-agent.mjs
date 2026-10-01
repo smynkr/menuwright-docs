@@ -42,14 +42,16 @@ import { fileURLToPath } from "node:url";
 // Config / constants
 // ---------------------------------------------------------------------------
 
-export const CLOUDFLARE_GLM_53_MODEL = "@cf/zai-org/glm-5.3-flash";
+export const ZAI_CODING_API_BASE = "https://api.z.ai/api/coding/paas/v4";
+const DEFAULT_GLM_MODEL = "glm-5.3-flash";
 const GLM_DEFAULT_MAX_TOKENS = 49152;
 export const GLM_PROVIDER_DEFAULTS = Object.freeze({
-  model: CLOUDFLARE_GLM_53_MODEL,
+  apiBase: ZAI_CODING_API_BASE,
+  model: DEFAULT_GLM_MODEL,
   maxTokens: GLM_DEFAULT_MAX_TOKENS,
   reasoningEffort: "high",
 });
-export const GLM_REASONING_EFFORTS = Object.freeze(["low", "medium", "high"]);
+export const GLM_REASONING_EFFORTS = Object.freeze(["low", "medium", "high", "max"]);
 const VALID_GLM_REASONING_EFFORTS = new Set(GLM_REASONING_EFFORTS);
 
 const PRODUCTS = ["layer", "overwatch", "locus", "routeshift", "codex", "invest"];
@@ -102,28 +104,33 @@ const BACKENDS = {
       process.env.DOCS_AGENT_GEMINI_ARGS.split(" ").includes("-"),
   },
   // Direct HTTP API backend — no CLI binary needed, just fetch().
-  // The shared GLM route uses Cloudflare Workers AI's OpenAI-compatible API.
-  // Env: CLOUDFLARE_ACCOUNT_ID (required for Cloudflare; 32 lowercase hexadecimal characters),
-  //      DOCS_AGENT_GLM_API_BASE (Cloudflare exact base or generic OpenAI-compatible endpoint),
-  //      DOCS_AGENT_GLM_MODEL (default @cf/zai-org/glm-5.3-flash),
-  //      DOCS_AGENT_GLM_REASONING_EFFORT (Cloudflare GLM-5.3-Flash only; low | medium | high),
-  //      GLM_API_KEY (Bearer token),
-  //      DOCS_AGENT_GLM_MAX_TOKENS (default 49152 — reasoning models spend
-  //      their completion budget on thinking BEFORE producing content).
+  // z.ai GLM Coding Plan OpenAI-compatible endpoint (generic bases/models supported).
+  // Env: DOCS_AGENT_GLM_API_BASE / _MODEL / _MAX_TOKENS / _REASONING_EFFORT,
+  //      GLM_API_KEY; optional DOCS_AGENT_GLM_FALLBACK_API_BASE / _FALLBACK_MODEL
+  //      and GLM_FALLBACK_API_KEY enable one fallback request.
   glm: {
     type: "api",
-    apiBase: (process.env.DOCS_AGENT_GLM_API_BASE || "").replace(/\/+$/, ""),
+    apiBase: (process.env.DOCS_AGENT_GLM_API_BASE || ZAI_CODING_API_BASE).replace(/\/+$/, ""),
     apiBaseEnv: "DOCS_AGENT_GLM_API_BASE",
     model: process.env.DOCS_AGENT_GLM_MODEL || GLM_PROVIDER_DEFAULTS.model,
     reasoningEffort: process.env.DOCS_AGENT_GLM_REASONING_EFFORT || GLM_PROVIDER_DEFAULTS.reasoningEffort,
     reasoningEffortEnv: "DOCS_AGENT_GLM_REASONING_EFFORT",
     apiKey: process.env.GLM_API_KEY || "",
     apiKeyEnv: "GLM_API_KEY",
+    fallbackApiBase: (process.env.DOCS_AGENT_GLM_FALLBACK_API_BASE || "").replace(/\/+$/, ""),
+    fallbackModel: process.env.DOCS_AGENT_GLM_FALLBACK_MODEL || "",
+    fallbackApiKey: process.env.GLM_FALLBACK_API_KEY || "",
     maxTokens: Number(process.env.DOCS_AGENT_GLM_MAX_TOKENS || GLM_PROVIDER_DEFAULTS.maxTokens),
     maxTokensEnv: "DOCS_AGENT_GLM_MAX_TOKENS",
-    gatewayId: process.env.DOCS_AGENT_GLM_GATEWAY_ID || "",
   },
 };
+
+export function getBackendConfig(backendName) {
+  const backend = BACKENDS[backendName];
+  if (!backend) return null;
+  const { apiBase, model, reasoningEffort, maxTokens } = backend;
+  return { apiBase, model, reasoningEffort, maxTokens };
+}
 
 // 20 min: the GLM budget is 49152 tokens and a slow reasoning stream must be
 // able to finish inside the window; the two knobs move together.
@@ -226,9 +233,10 @@ Env:
   DOCS_AGENT_CLAUDE_CMD / _CODEX_CMD / _GEMINI_CMD (override the CLI binary),
   DOCS_AGENT_CLAUDE_ARGS / _CODEX_ARGS / _GEMINI_ARGS (override invocation flags),
   DOCS_AGENT_TIMEOUT_MS, DOCS_AGENT_MAX_PAGES,
-  CLOUDFLARE_ACCOUNT_ID, DOCS_AGENT_GLM_API_BASE / _MODEL / _MAX_TOKENS /
+  DOCS_AGENT_GLM_API_BASE / _MODEL / _MAX_TOKENS /
   _REASONING_EFFORT, GLM_API_KEY,
-  DOCS_AGENT_GLM_GATEWAY_ID (optional Cloudflare AI Gateway id).
+  DOCS_AGENT_GLM_FALLBACK_API_BASE / _FALLBACK_MODEL, GLM_FALLBACK_API_KEY
+  (optional same-model fallback, e.g. OpenRouter).
   Auth for whichever backend you pick is NOT this script's concern — it assumes
   the CLI on PATH is already authenticated (subscription OAuth locally, or a
   metered API key in hosted CI). See README.md.
@@ -280,7 +288,9 @@ function matchesAnyGlob(filePath, globs) {
 // shell helpers
 // ---------------------------------------------------------------------------
 
+const MODEL_API_KEYS = ["GLM_API_KEY", "GLM_FALLBACK_API_KEY"];
 const GITHUB_CREDENTIAL_ENV_KEYS = new Set([
+  ...MODEL_API_KEYS,
   "DOCS_AGENT_SOURCE_TOKEN",
   "GH_TOKEN",
   "GITHUB_TOKEN",
@@ -333,6 +343,7 @@ function sourceGhEnv() {
   }
   const env = { ...process.env, GH_TOKEN: token };
   delete env.DOCS_AGENT_SOURCE_TOKEN;
+  for (const key of MODEL_API_KEYS) delete env[key];
   return env;
 }
 
@@ -342,6 +353,7 @@ function sourceGhEnv() {
 function destinationGhEnv() {
   const env = { ...process.env };
   delete env.DOCS_AGENT_SOURCE_TOKEN;
+  for (const key of MODEL_API_KEYS) delete env[key];
   return env;
 }
 
@@ -709,24 +721,13 @@ export function parseSSEPayload(text) {
     }
     const choice = evt?.choices?.[0];
     if (choice?.delta?.content) content += choice.delta.content;
-    // Reasoning arrives as `reasoning` (Cloudflare GLM) or
+    // Reasoning arrives as `reasoning` (OpenAI-compatible providers) or
     // `reasoning_content` (Zhipu/DeepSeek-style OpenAI-compatible APIs).
     const reasoning = choice?.delta?.reasoning ?? choice?.delta?.reasoning_content;
     if (reasoning) reasoningChars += String(reasoning).length;
     if (choice?.finish_reason) finishReason = choice.finish_reason;
   }
   return { content, reasoningChars, finishReason, sawDone };
-}
-export function buildApiHeaders(backend) {
-  const headers = {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${backend.apiKey}`,
-  };
-  if (backend.gatewayId) {
-    headers["cf-aig-gateway-id"] = backend.gatewayId;
-    headers["cf-aig-collect-log-payload"] = "false";
-  }
-  return headers;
 }
 
 export function retryAfterDelayMs(headers, nowMs = Date.now()) {
@@ -743,217 +744,252 @@ export function retryAfterDelayMs(headers, nowMs = Date.now()) {
   return DEFAULT_GLM_RETRY_DELAY_MS;
 }
 
-export function validateCloudflareGlm53Config(
-  backend,
-  {
-    accountId = process.env.CLOUDFLARE_ACCOUNT_ID || "",
-    apiBase = backend.apiBase,
-  } = {},
-) {
-  let apiBaseHostname = "";
-  try {
-    apiBaseHostname = new URL(apiBase || "").hostname;
-  } catch {
-    // A malformed generic URL is reported by fetch; Cloudflare mode still
-    // fails closed when the model/account/base identify a Cloudflare route.
-  }
 
-  const cloudflareMode =
-    backend.model === CLOUDFLARE_GLM_53_MODEL ||
-    accountId !== "" ||
-    apiBaseHostname === "api.cloudflare.com";
-  if (!cloudflareMode) return { cloudflareMode: false, error: null };
-  if (!/^[0-9a-f]{32}$/.test(accountId)) {
-    return {
-      cloudflareMode: true,
-      error: "CLOUDFLARE_ACCOUNT_ID must be 32 lowercase hexadecimal characters",
-    };
-  }
-  const expectedApiBase = `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/v1`;
-  if (apiBase !== expectedApiBase) {
-    return {
-      cloudflareMode: true,
-      error: "DOCS_AGENT_GLM_API_BASE must be exactly the Cloudflare account endpoint",
-    };
-  }
-  return { cloudflareMode: true, error: null };
+export function validateGlmReasoningEffort(backend) {
+  return VALID_GLM_REASONING_EFFORTS.has(backend.reasoningEffort)
+    ? null : "DOCS_AGENT_GLM_REASONING_EFFORT must be low, medium, high, or max";
 }
 
-function isCloudflareGlm53Mode(backend, cloudflareMode) {
-  return Boolean(cloudflareMode && backend.model === CLOUDFLARE_GLM_53_MODEL);
+export function fallbackReasoningEffort(apiBase, effort) {
+  let hostname = "";
+  try { hostname = new URL(apiBase).hostname; } catch { return effort; }
+  return effort === "max" && hostname === "openrouter.ai" ? "xhigh" : effort;
 }
 
-export function validateGlmReasoningEffort(backend, cloudflareMode, configuredReasoningEffort) {
-  if (!isCloudflareGlm53Mode(backend, cloudflareMode)) return null;
-  if (
-    !VALID_GLM_REASONING_EFFORTS.has(backend.reasoningEffort) ||
-    (configuredReasoningEffort !== undefined && !VALID_GLM_REASONING_EFFORTS.has(configuredReasoningEffort))
-  ) {
-    return `${backend.reasoningEffortEnv} must be low, medium, or high`;
-  }
-  return null;
-}
-
-// Build the OpenAI-compatible request body. Generic legacy GLM endpoints keep
-// their historical wire format; only Cloudflare's exact GLM-5.3-Flash mode
-// adds its reasoning contract.
-export function buildApiRequestBody(backend, prompt, cloudflareMode) {
+// Keep every provider's configured wire format, including DeepSeek's absent effort.
+export function buildApiRequestBody(backend, prompt) {
   return {
     model: backend.model,
     messages: [{ role: "user", content: prompt }],
     temperature: 0.2,
     max_tokens: backend.maxTokens,
-    ...(isCloudflareGlm53Mode(backend, cloudflareMode) ? { reasoning_effort: backend.reasoningEffort } : {}),
+    ...(backend.reasoningEffort ? { reasoning_effort: backend.reasoningEffort } : {}),
     stream: true,
   };
 }
 
-// Expose the resolved backend identity for receipts and contract tests without
-// exposing credentials or reasoning payloads.
+function apiHost(apiBase) {
+  try { return new URL(apiBase).hostname; } catch { return "invalid-endpoint"; }
+}
+
+function redactApiKeys(value, backend) {
+  let text = String(value);
+  for (const key of [backend.apiKey, backend.fallbackApiKey, BACKENDS.glm.apiKey, BACKENDS.glm.fallbackApiKey]) {
+    if (key) text = text.split(key).join("[REDACTED]");
+  }
+  return text;
+}
+
+const API_SERVING = new Map();
+// Explicit quota/usage-limit signals only (z.ai 1113/1308/1310, insufficient
+// balance/credits, usage limit, quota exceeded/exhausted) — never a bare "quota".
+const QUOTA_SIGNAL = /\b(1113|1308|1310)\b|insufficient (balance|credits|quota)|usage limit|quota (exceeded|exhausted|limit)|exceeded (your |the )?(current )?quota/i;
+const AUTH_PROVIDER_SIGNAL = /\b(unauthori[sz]ed|authentication|invalid[ _-]?api[ _-]?key|token expired|forbidden)\b/i;
+const TRANSIENT_PROVIDER_SIGNAL = /\b(timeout|timed out|overloaded|unavailable|internal server error|server error|rate limit)\b/i;
+
+// Classify explicit provider error objects carried in SSE `data:` events. Only
+// the parsed error object is inspected, never model content or reasoning text.
+// Returns null when the stream carries no error object.
+export function classifySseProviderError(sseText) {
+  const text = String(sseText);
+  const candidates = [];
+  for (const line of text.split(/\r?\n/)) {
+    const m = /^data:\s*(\{.*\})\s*$/.exec(line);
+    if (m) candidates.push(m[1]);
+  }
+  // A provider may answer a streaming request with a plain JSON error body.
+  if (candidates.length === 0 && text.trim().startsWith("{")) candidates.push(text.trim());
+  for (const raw of candidates) {
+    let event;
+    try { event = JSON.parse(raw); } catch { continue; }
+    const error = event && typeof event === "object" ? event.error : null;
+    if (!error || typeof error !== "object") continue;
+    const body = JSON.stringify(error);
+    const status = Number(error.status ?? error.http_status ?? error.code);
+    // `detail` is the full error object; callers redact before truncating.
+    if (Number.isInteger(status) && status >= 400 && status <= 599) {
+      return { fallbackEligible: isFallbackEligibleStatus(status, body), detail: body };
+    }
+    return { fallbackEligible: QUOTA_SIGNAL.test(body) || AUTH_PROVIDER_SIGNAL.test(body) || TRANSIENT_PROVIDER_SIGNAL.test(body), detail: body };
+  }
+  return null;
+}
+
+export function isFallbackEligibleStatus(status, body) {
+  // Auth, timeout, rate-limit and 5xx are transient/host-specific. Other 4xx
+  // responses are deterministic request errors and surface unchanged, except an
+  // explicit quota/usage-limit body (e.g. 402 insufficient balance); 400 and 422
+  // never fall back.
+  if ([401, 403, 408, 429].includes(status) || status >= 500) return true;
+  if (status === 400 || status === 422) return false;
+  return QUOTA_SIGNAL.test(String(body));
+}
+
 export function backendReceiptLabel(backendName) {
-  const backend = BACKENDS[backendName];
+  const backend = API_SERVING.get(backendName) || BACKENDS[backendName];
   if (backend.type === "api") {
-    return `**${backendName}** (model: \`${backend.model}\`, API base: \`${backend.apiBase}\`)`;
+    return `**${backendName}** (model: \`${backend.model}\`, API base: \`${backend.apiBase}\`${backend.servedBy ? `, served_by: \`${backend.servedBy}\`` : ""})`;
   }
   return `**${backendName}** (command: \`${backend.cmd} ${backend.args.join(" ")}\`)`;
 }
 
 
-function runBackend(backendName, prompt, timeoutMs) {
+async function requestApiBackend(backendName, backend, prompt, timeoutMs, deadline, retry429) {
+  try {
+    // stream:true is load-bearing for this aggregator: non-streaming
+    // requests at review/pipeline prompt sizes were observed returning
+    // 524 gateway timeouts where the identical streaming request
+    // completed. Reasoning models (GLM 5.3 Flash, etc.) stream chain-of-thought
+    // in delta.reasoning and the actual answer in delta.content; the
+    // completion budget must cover BOTH, hence the large max_tokens.
+    // A rate limit can be transient, but a second metered request is only
+    // justified for that exact first-response case. Other failures return to the caller, which may
+    // use the explicitly configured fallback within this same deadline.
+    const requestAttempts = retry429 ? 2 : 1;
+    const timeoutResult = () => ({
+      code: -1,
+      signal: null,
+      stdout: "",
+      stderr: `API backend "${backendName}" exhausted its ${timeoutMs}ms timeout budget`,
+      timedOut: true, fallbackEligible: true,
+    });
+    try { if (!["http:", "https:"].includes(new URL(backend.apiBase).protocol)) throw new Error("scheme"); } catch {
+      return { code: -1, signal: null, stdout: "", stderr: `API backend "${backendName}" has an invalid API base`, timedOut: false, fallbackEligible: false };
+    }
+    for (let attempt = 0; attempt < requestAttempts; attempt += 1) {
+      const remainingTimeoutMs = deadline - Date.now();
+      if (remainingTimeoutMs <= 0) return timeoutResult();
+      const res = await fetch(`${backend.apiBase}/chat/completions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${backend.apiKey}` },
+        body: JSON.stringify(buildApiRequestBody(backend, prompt)),
+        signal: AbortSignal.timeout(Math.max(1, Math.ceil(remainingTimeoutMs))),
+      });
+      if (!res.ok) {
+        const body = await res.text().catch(() => "(unreadable)");
+        if (retry429 && res.status === 429 && attempt === 0) {
+          const retryDelayMs = retryAfterDelayMs(res.headers);
+          const remainingBudgetMs = deadline - Date.now();
+          if (remainingBudgetMs <= 0) return timeoutResult();
+          const waitMs = Math.min(retryDelayMs, remainingBudgetMs);
+          log(`API backend "${backendName}" returned HTTP 429; waiting ${waitMs}ms before retrying once...`);
+          await new Promise((resolve) => setTimeout(resolve, waitMs));
+          continue;
+        }
+        return { code: res.status, signal: null, stdout: "", stderr: `HTTP ${res.status}: ${redactApiKeys(body, backend).slice(-4000)}`, timedOut: false, fallbackEligible: isFallbackEligibleStatus(res.status, body) };
+      }
+      if (!res.body) {
+        return { code: -1, signal: null, stdout: "", stderr: "HTTP 200 but an empty response body — the endpoint may not support streaming.", timedOut: false, fallbackEligible: true };
+      }
+
+      // Accumulate the whole stream, then parse. Review-sized streams are a
+      // few MB at most, and full-text parsing cannot drop a final event that
+      // arrives without a trailing newline.
+      let sseText = "";
+      const decoder = new TextDecoder();
+      const reader = res.body.getReader();
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        sseText += decoder.decode(value, { stream: true });
+      }
+      sseText += decoder.decode(); // flush a multi-byte char split at stream end
+
+      const { content, reasoningChars, finishReason, sawDone } = parseSSEPayload(sseText);
+
+      // An explicit provider error object (SSE event or plain JSON body) fails
+      // the attempt whatever streamed before it; its own status/code decides
+      // fallback eligibility. Content and reasoning text are never inspected.
+      const sseProviderError = classifySseProviderError(sseText);
+      if (sseProviderError) {
+        return { code: -1, signal: null, stdout: "", stderr: `provider error event in stream: ${redactApiKeys(sseProviderError.detail, backend).slice(0, 500)}`, timedOut: false, fallbackEligible: sseProviderError.fallbackEligible };
+      }
+      // A stream that ends without a finish_reason AND without [DONE] died
+      // mid-generation (gateway drop, aggregator hang-up — documented
+      // history on this endpoint). Its content is truncated by definition;
+      // never ship it.
+      if (finishReason === null && !sawDone) {
+        return {
+          code: -1, signal: null, stdout: "",
+          stderr: "stream ended without finish_reason or [DONE] — the provider closed early, so the response is truncated. Retry the run; if this persists, check the aggregator.",
+          // An explicit provider error object is a request failure, not a
+          // dropped stream; only a quota error of that kind may fall back.
+          timedOut: false, fallbackEligible: true,
+        };
+      }
+
+      // A truncated stream is never trustworthy: an earlier FILE block could
+      // be "complete" while the final one is cut off, which would open a
+      // silently-incomplete PR. Fail the whole run instead.
+      if (finishReason === "length") {
+        return {
+          code: -1, signal: null, stdout: "",
+          stderr: `stream ended with finish_reason=length — the response is truncated (max_tokens=${backend.maxTokens}). Truncated output is never committed; raise ${backend.maxTokensEnv} or simplify the prompt.`,
+          timedOut: false,
+        };
+      }
+      if (finishReason !== null && finishReason !== "stop") {
+        return {
+          code: -1, signal: null, stdout: "",
+          stderr: `stream ended with finish_reason=${finishReason} — the provider cut the response short; only "stop" is an accepted terminal reason. Partial output is never committed.`,
+          timedOut: false,
+        };
+      }
+      if (!content && reasoningChars > 0) {
+        return {
+          code: -1, signal: null, stdout: "",
+          stderr: `Model produced ${reasoningChars} chars of reasoning but no content (token budget exhausted during thinking). Raise ${backend.maxTokensEnv} (current ${backend.maxTokens}) or simplify the prompt.`,
+          timedOut: false,
+        };
+      }
+      return { code: 0, signal: null, stdout: content, stderr: "", timedOut: false };
+    }
+  } catch (err) {
+    const timedOut = err.name === "TimeoutError" || err.name === "AbortError";
+    return { code: -1, signal: null, stdout: "", stderr: `fetch error: ${redactApiKeys(err.message, backend)}`, timedOut, fallbackEligible: timedOut || err instanceof TypeError };
+  }
+
+}
+
+export async function runApiBackend(backendName, backend, prompt, timeoutMs) {
+  const deadline = Date.now() + timeoutMs;
+  let serving = backend;
+  let result = await requestApiBackend(backendName, backend, prompt, timeoutMs, deadline, backendName === "glm");
+  if (backendName === "glm" && result.fallbackEligible && backend.fallbackApiBase && backend.fallbackModel && backend.fallbackApiKey) {
+    serving = {
+      ...backend,
+      apiBase: backend.fallbackApiBase,
+      model: backend.fallbackModel,
+      apiKey: (backend.fallbackApiKey),
+      reasoningEffort: fallbackReasoningEffort(backend.fallbackApiBase, backend.reasoningEffort),
+    };
+    log(`API backend "glm" primary ${apiHost(backend.apiBase)} failed (${result.timedOut ? "timeout" : result.code > 0 ? `HTTP ${result.code}` : "transport, quota, or incomplete stream"}); falling back to ${apiHost(serving.apiBase)} model=${serving.model} reasoning_effort=${serving.reasoningEffort}`);
+    result = await requestApiBackend(backendName, serving, prompt, timeoutMs, deadline, false);
+  }
+  if (result.code === 0) {
+    const servedBy = apiHost(serving.apiBase);
+    log(`served_by=${servedBy} model=${serving.model}`);
+    API_SERVING.set(backendName, { ...serving, servedBy });
+    return { ...result, servedBy, model: serving.model };
+  }
+  API_SERVING.delete(backendName);
+  return result;
+}
+
+export function runBackend(backendName, prompt, timeoutMs) {
   const backend = BACKENDS[backendName];
   if (!backend) fail(`unknown backend "${backendName}" (must be one of: ${Object.keys(BACKENDS).join(", ")})`);
 
   // --- Direct HTTP API backend (no CLI binary) ---
   if (backend.type === "api") {
-    if (!backend.apiBase) {
-      if (backendName === "glm") {
-        fail(`backend "${backendName}" requires DOCS_AGENT_GLM_API_BASE (e.g. https://api.cloudflare.com/client/v4/accounts/<account-id>/ai/v1)`);
-      }
-      fail(`backend "${backendName}" requires ${backend.apiBaseEnv} env var`);
-    }
-    if (!backend.apiKey) {
-      if (backendName === "glm") {
-        fail(`backend "${backendName}" requires GLM_API_KEY env var (metered API key)`);
-      }
-      fail(`backend "${backendName}" requires ${backend.apiKeyEnv} env var (metered API key)`);
-    }
-    let cloudflareMode = false;
+    if (!backend.apiBase) fail(`backend "${backendName}" requires ${backend.apiBaseEnv} env var`);
+    if (!backend.apiKey) fail(`backend "${backendName}" requires ${backend.apiKeyEnv} env var (metered API key)`);
     if (backendName === "glm") {
-      const cloudflareConfig = validateCloudflareGlm53Config(backend);
-      cloudflareMode = cloudflareConfig.cloudflareMode;
-      if (cloudflareConfig.error) fail(cloudflareConfig.error);
-      const reasoningError = validateGlmReasoningEffort(
-        backend,
-        cloudflareMode,
-        process.env[backend.reasoningEffortEnv],
-      );
+      const reasoningError = validateGlmReasoningEffort(backend);
       if (reasoningError) fail(reasoningError);
     }
     log(`invoking API backend "${backendName}" (${backend.apiBase}, model=${backend.model}, max_tokens=${backend.maxTokens}, reasoning_effort=${backend.reasoningEffort || "provider-default"}, streaming), timeout=${timeoutMs}ms...`);
-    return (async () => {
-      try {
-        // stream:true is load-bearing for this aggregator: non-streaming
-        // requests at review/pipeline prompt sizes were observed returning
-        // 524 gateway timeouts where the identical streaming request
-        // completed. Reasoning models (GLM 5.3 Flash, etc.) stream chain-of-thought
-        // in delta.reasoning and the actual answer in delta.content; the
-        // completion budget must cover BOTH, hence the large max_tokens.
-        // A rate limit can be transient, but a second metered request is only
-        // justified for that exact first-response case. Authentication and all
-        // other provider failures must remain single-attempt and fail closed.
-        const requestAttempts = backendName === "glm" ? 2 : 1;
-        const deadline = Date.now() + timeoutMs;
-        const timeoutResult = () => ({
-          code: -1,
-          signal: null,
-          stdout: "",
-          stderr: `API backend "${backendName}" exhausted its ${timeoutMs}ms timeout budget`,
-          timedOut: true,
-        });
-        for (let attempt = 0; attempt < requestAttempts; attempt += 1) {
-          const remainingTimeoutMs = deadline - Date.now();
-          if (remainingTimeoutMs <= 0) return timeoutResult();
-          const res = await fetch(`${backend.apiBase}/chat/completions`, {
-            method: "POST",
-            headers: buildApiHeaders(backend),
-            body: JSON.stringify(buildApiRequestBody(backend, prompt, cloudflareMode)),
-            signal: AbortSignal.timeout(Math.max(1, Math.ceil(remainingTimeoutMs))),
-          });
-          if (!res.ok) {
-            const body = await res.text().catch(() => "(unreadable)");
-            if (backendName === "glm" && res.status === 429 && attempt === 0) {
-              const retryDelayMs = retryAfterDelayMs(res.headers);
-              const remainingBudgetMs = deadline - Date.now();
-              if (remainingBudgetMs <= 0) return timeoutResult();
-              const waitMs = Math.min(retryDelayMs, remainingBudgetMs);
-              log(`API backend "${backendName}" returned HTTP 429; waiting ${waitMs}ms before retrying once...`);
-              await new Promise((resolve) => setTimeout(resolve, waitMs));
-              continue;
-            }
-            return { code: res.status, signal: null, stdout: "", stderr: `HTTP ${res.status}: ${body.slice(-4000)}`, timedOut: false };
-          }
-          if (!res.body) {
-            return { code: -1, signal: null, stdout: "", stderr: "HTTP 200 but an empty response body — the endpoint may not support streaming.", timedOut: false };
-          }
-
-          // Accumulate the whole stream, then parse. Review-sized streams are a
-          // few MB at most, and full-text parsing cannot drop a final event that
-          // arrives without a trailing newline.
-          let sseText = "";
-          const decoder = new TextDecoder();
-          const reader = res.body.getReader();
-          for (;;) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            sseText += decoder.decode(value, { stream: true });
-          }
-          sseText += decoder.decode(); // flush a multi-byte char split at stream end
-
-          const { content, reasoningChars, finishReason, sawDone } = parseSSEPayload(sseText);
-
-          // A stream that ends without a finish_reason AND without [DONE] died
-          // mid-generation (gateway drop, aggregator hang-up — documented
-          // history on this endpoint). Its content is truncated by definition;
-          // never ship it.
-          if (finishReason === null && !sawDone) {
-            return {
-              code: -1, signal: null, stdout: "",
-              stderr: "stream ended without finish_reason or [DONE] — the provider closed early, so the response is truncated. Retry the run; if this persists, check the aggregator.",
-              timedOut: false,
-            };
-          }
-
-          // A truncated stream is never trustworthy: an earlier FILE block could
-          // be "complete" while the final one is cut off, which would open a
-          // silently-incomplete PR. Fail the whole run instead.
-          if (finishReason === "length") {
-            return {
-              code: -1, signal: null, stdout: "",
-              stderr: `stream ended with finish_reason=length — the response is truncated (max_tokens=${backend.maxTokens}). Truncated output is never committed; raise ${backend.maxTokensEnv} or simplify the prompt.`,
-              timedOut: false,
-            };
-          }
-          if (finishReason !== null && finishReason !== "stop") {
-            return {
-              code: -1, signal: null, stdout: "",
-              stderr: `stream ended with finish_reason=${finishReason} — the provider cut the response short; only "stop" is an accepted terminal reason. Partial output is never committed.`,
-              timedOut: false,
-            };
-          }
-          if (!content && reasoningChars > 0) {
-            return {
-              code: -1, signal: null, stdout: "",
-              stderr: `Model produced ${reasoningChars} chars of reasoning but no content (token budget exhausted during thinking). Raise ${backend.maxTokensEnv} (current ${backend.maxTokens}) or simplify the prompt.`,
-              timedOut: false,
-            };
-          }
-          return { code: 0, signal: null, stdout: content, stderr: "", timedOut: false };
-        }
-      } catch (err) {
-        const timedOut = err.name === "TimeoutError" || err.name === "AbortError";
-        return { code: -1, signal: null, stdout: "", stderr: `fetch error: ${err.message}`, timedOut };
-      }
-    })();
+    return runApiBackend(backendName, backend, prompt, timeoutMs);
   }
 
   // --- CLI backend (spawn a subprocess) ---
