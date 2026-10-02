@@ -47,6 +47,18 @@ The exchange runs under your signed-in session, so connected tokens always bind 
 | **Schedule**     | Daily sync via Celery beat at 04:00 UTC                                                                 |
 | **Sync history** | Every import is logged with source, records imported, and status                                        |
 
+## How deletions are handled
+
+When you delete an item or variation in Square, the next sync **deactivates** the corresponding MenuWright row and appends ` (Discontinued)` to its name. The row's last-known price and category are preserved, and sales history stays attached — the item simply drops out of active analysis. If you later restore the item in Square, the next sync reactivates the row and clears the suffix.
+
+Rows you deactivated manually in MenuWright are never revived by a Square sync — your intent is preserved across Square delete/undelete cycles.
+
+Menu rows carried over from an earlier sync model (before variation-level keying) are marked ` (Legacy)` while their parent item still has a live variation in Square, or ` (Discontinued)` when the parent is deleted. These rows stay active while they hold sales history within the last 90 days, then age out automatically. A new sale landing on an aged-out row reactivates it so the revenue is never invisible in analysis.
+
+<Callout>
+  MenuWright never deletes menu items or sales records. Deactivation is the strongest action a sync takes, so your historical sales totals can never shrink from a sync.
+</Callout>
+
 ## Limitations
 
 - **Sandbox-only today.** Production Square app review is the long pole for real restaurants; the OAuth flow itself is implemented and tested against sandbox.
