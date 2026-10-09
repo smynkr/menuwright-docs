@@ -1,8 +1,8 @@
 ---
 title: MenuWright
-description: AI menu engineering for independent restaurants — profitability and
-  popularity classification, dollar-impact recommendations, and POS or CSV
-  ingestion.
+description: AI menu engineering for independent restaurants — sales and
+  cost-based classification, measured recommendations, and separate POS or
+  file-import paths.
 ---
 
 import { Calculator, Database, DollarSign, LineChart, ShieldCheck, Sparkles, Target, UtensilsCrossed, Workflow } from 'lucide-react';
@@ -11,12 +11,12 @@ import { Calculator, Database, DollarSign, LineChart, ShieldCheck, Sparkles, Tar
   src="/screenshots/menuwright.png"
   alt="MenuWright landing page with the menu-matrix dashboard: classify every item by profitability and popularity, then act on the AI recommendations"
   accent="#5D3EFB"
-  caption="MenuWright classifies every item on the profitability × popularity matrix and turns the result into dollar-impact actions."
+  caption="MenuWright classifies items using available cost and sales data, then surfaces prioritized recommendations with estimated impact where supported."
   highlights={[
-  { text: "Classify every item on the classic profitability × popularity matrix.", icon: Target },
-  { text: "AI recommendations with projected monthly dollar impact.", icon: Sparkles },
-  { text: "Connect Square or import CSV/Excel sales history.", icon: Database },
-  { text: "Weekly email digests and monthly PDF deep dives.", icon: LineChart },
+  { text: "Classify items by popularity and contribution margin when costs are available; missing costs are handled as provisional or revenue-only inputs.", icon: Target },
+  { text: "AI recommendations include projected monthly impact where it can be estimated.", icon: Sparkles },
+  { text: "Square POS sync remains in sandbox pending production review; file imports are available.", icon: Database },
+  { text: "Weekly email digests and monthly PDF reports.", icon: LineChart },
 ]}
 />
 
@@ -26,27 +26,43 @@ import { Calculator, Database, DollarSign, LineChart, ShieldCheck, Sparkles, Tar
 
 <Cards>
   <Card icon={<Workflow />} title="Get started" href="/menuwright/getting-started">
-    Sign up, bring your menu and sales data, and run your first analysis.
+    Prepare a restaurant and run a first analysis.
   </Card>
 
   <Card icon={<Calculator />} title="Menu matrix" href="/menuwright/menu-matrix">
-    Learn the Kasavana–Smith method and the four-quadrant classification.
+    See how costs, sales mix, and partial-cost cases affect classification.
+  </Card>
+
+  <Card icon={<Sparkles />} title="Menu scan and redesign" href="/menuwright/menu-scan">
+    Scan a printed-menu photo and preview a layout-preserving redesign.
   </Card>
 
   <Card icon={<UtensilsCrossed />} title="Square connection" href="/menuwright/square">
-    Connect your Square account and sync catalog and sales automatically.
+    Review the sandbox connection and production-review boundary.
   </Card>
 
-  <Card icon={<Database />} title="CSV import" href="/menuwright/csv-import">
-    Import sales history and food costs without a POS.
+  <Card icon={<Database />} title="CSV and Excel import" href="/menuwright/csv-import">
+    Import sales history separately from menu-item cost management.
+  </Card>
+
+  <Card icon={<Database />} title="Data import and menu items" href="/menuwright/data-import">
+    Manage items, upload matching food costs, and review AI estimates.
+  </Card>
+
+  <Card icon={<LineChart />} title="Insights and trends" href="/menuwright/insights-trends">
+    Explore analysis-backed insights and comparisons across analysis history.
+  </Card>
+
+  <Card icon={<ShieldCheck />} title="Account, branding, and team" href="/menuwright/account-branding">
+    Manage the restaurant profile, branding, and owner-controlled memberships.
   </Card>
 
   <Card icon={<DollarSign />} title="Billing and plans" href="/menuwright/billing">
-    Free, Core, and Pro plans — flat monthly pricing, no usage meters.
+    Free, Core, and Pro plan limits and payment options.
   </Card>
 
   <Card icon={<LineChart />} title="Reports" href="/menuwright/reports">
-    Weekly email digests and monthly PDF deep dives.
+    Review recurring email digests and monthly PDF reports.
   </Card>
 </Cards>
 
@@ -54,30 +70,30 @@ import { Calculator, Database, DollarSign, LineChart, ShieldCheck, Sparkles, Tar
 
 <ProcessFlow
   accent="#5D3EFB"
-  caption="Sales and cost data feed a menu engineering matrix; AI turns the matrix into prioritized, dollar-quantified actions."
+  caption="Sales and cost data feed the menu-engineering matrix; prioritized AI actions include an estimated dollar impact where supported."
   steps={[
-  { title: "Bring your data", description: "Connect Square or import sales and food costs as CSV/Excel." },
-  { title: "Classify the menu", description: "Every item is scored on profitability and popularity and placed in a quadrant." },
-  { title: "Get recommendations", description: "AI suggests reprice, promote, bundle, or cut actions with projected monthly impact." },
-  { title: "Act and track", description: "Apply the changes, then watch the next analysis reflect the impact." },
+  { title: "Bring your data", description: "Use sample data, import menu and sales files, or test the Square connection in its current sandbox." },
+  { title: "Classify the menu", description: "Use contribution margins where costs are available; missing-cost items receive provisional revenue-share classifications." },
+  { title: "Get recommendations", description: "AI suggests reprice, promote, bundle, or cut actions with projected monthly impact where one can be estimated." },
+  { title: "Act and track", description: "Compare later revenue measurements with the projection; the before/after change is not proof of causal impact." },
 ]}
 />
 
 ## What MenuWright is for
 
-Independent restaurants run on tight margins, and most menu decisions are guesses. MenuWright turns the sales and cost data a restaurant already has into a clear answer: which items to protect, promote, reprice, or cut — and roughly how many dollars each move is worth.
+Independent restaurants run on tight margins, and most menu decisions are guesses. MenuWright uses available sales and cost data to suggest which items to protect, promote, reprice, or cut, with a dollar impact estimate when one can be supported.
 
-It is built for the owner or operator who wants an opinionated next action, not another dashboard to interpret. Every recommendation names the item, the action, and the projected impact.
+It is built for owners and operators who want a prioritized action, with an estimate where available, rather than another dashboard to interpret.
 
 ## FAQ
 
 <Accordions>
   <Accordion title="Do I need a POS system?">
-    No. Connect Square for automatic catalog and sales sync, or import your menu and sales history as CSV/Excel. A sample-data mode lets you explore the workflow without any data.
+    Square's automated catalog and sales sync is currently described as a sandbox integration; production onboarding remains gated on app review. Without a POS, use CSV/Excel imports or sample data.
   </Accordion>
 
   <Accordion title="What if I don't have food costs?">
-    MenuWright still works — it classifies by popularity and revenue. Once items have food costs, it unlocks true contribution margins and the full profit-based matrix.
+    MenuWright supports cost-based classifications for items with costs. Items missing costs can receive provisional revenue-share classifications; with no food costs, revenue share is only a profitability proxy. Add verified costs for every item to classify every item's profitability using contribution margins.
   </Accordion>
 
   <Accordion title="Where does my data live?">

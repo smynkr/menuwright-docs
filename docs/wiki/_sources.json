@@ -23,7 +23,11 @@
       "ledger"
     ],
     "menuwright/index.mdx": [
-      "current-state"
+      "current-state",
+      "ledger"
+    ],
+    "menuwright/menu-matrix.mdx": [
+      "ledger"
     ],
     "next.config.mjs": [
       "current-state",
@@ -56,7 +60,8 @@
     "app/(home)/page.tsx": "a5c6fdc1f1e9ecf90037598edeebff1d2f6fee89dfe940eb22dc687f14eb292e",
     "components/brand/products.ts": "9b186cd5be6e5e8c51fe8bf48bbc0b20df402aaeeef9a8267452d4f3febc31c0",
     "docs.json": "1fa24927a5aad2c4118b4d4c6268d09157b4c1431feeed2ccfe612de1c15386e",
-    "menuwright/index.mdx": "df096d777a1653c0e372d09a861bebbb89ac2bd72e7c33b9829f6385f63ba639",
+    "menuwright/index.mdx": "16c4cf226088e6153470dd1b012a50e50a0a7c2fe32f8e3a2a1bb2b6efcf0152",
+    "menuwright/menu-matrix.mdx": "721022989e0ad94452461d11ec155604beb3136f7118be90092f0b3cba6bbbf9",
     "next.config.mjs": "e829914a5f83fab8d38b7b9ef99a623d691c38790bf0be21c0fd2a07874c7fd4",
     "package.json": "e3faaf669b7f9b476e0210916434c5c4fd8dd829c316376321127e713943757a",
     "pipeline/docs-agent.mjs": "27a31835822a2e7ff4eb724cec1c0429e243c94d17776383c98934b0b03d05f7",

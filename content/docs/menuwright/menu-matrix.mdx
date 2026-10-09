@@ -18,20 +18,25 @@ menu mix % = item quantity sold / total quantity sold
 
 **Profitability — contribution margin**
 
-```
-contribution margin = menu price − food cost
-```
+effective unit contribution margin = effective unit price − food cost
+
+When a sales record has positive quantity and revenue, effective unit price is
+`gross revenue / quantity sold`; otherwise the analysis uses the menu price.
+Thus discounts reflected in sales revenue can change the margin from the menu
+price shown on the menu.
 
 ## The thresholds
 
 An item is "high" on an axis when it clears that axis's threshold:
 
-| Axis              | Threshold                                                                                                                                                              |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Popularity**    | `1 / N × 0.70` — the average share an item would have if sales were perfectly even, discounted by the standard 70% adjustment. `N` is the number of active menu items. |
-| **Profitability** | The **weighted average contribution margin** across all items, weighted by quantity sold.                                                                              |
+| Axis              | Threshold                                                                                    |
+| ----------------- | -------------------------------------------------------------------------------------------- |
+| **Popularity**    | `1 / N × 0.70`, rounded to 0.01 (with a 0.01 floor). `N` is the number of active menu items. |
+| **Profitability** | The quantity-weighted average contribution margin across items with usable food costs.       |
 
-Values are rounded to cents (0.01). An item at or above the threshold counts as high.
+The profitability threshold is computed over all cost-known items in full-cost
+mode and over cost-known items only in partial-cost mode. Values are rounded to
+cents; an item at or above its applicable threshold counts as high.
 
 ## The four quadrants
 
@@ -42,11 +47,21 @@ Values are rounded to cents (0.01). An item at or above the threshold counts as 
 
 These are MenuWright's current product labels. The classic literature calls the same quadrants Star, Plowhorse, Puzzle, and Dog; the product renamed them to be self-explanatory to restaurant owners.
 
-## Revenue-only fallback
+## Cost-data coverage and fallback
 
-When **any** item lacks food cost data, MenuWright falls back to a one-dimensional analysis using revenue contribution and sales volume. This still identifies bestsellers and underperformers, but it cannot place items in the full four-quadrant matrix — true contribution margins require food costs.
+When every item has a usable food cost, all items are classified using their
+contribution margins and sales mix.
 
-The moment every item has a food cost, the full profit-based matrix unlocks.
+With **partial** cost coverage, items that have costs use margin-based
+classification and a threshold computed over only those items. Items without
+costs receive a **provisional** revenue-share classification. To interpret
+every item's profitability as contribution margin, enter costs for all active
+items.
+
+When **no** item has a food cost, the profitability axis uses revenue share as
+a proxy while popularity still uses sales mix. This can identify relative
+sales patterns, but it does not provide contribution margins or a true
+profitability classification.
 
 ## Analysis snapshots
 
