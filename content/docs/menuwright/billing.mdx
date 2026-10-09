@@ -10,18 +10,18 @@ MenuWright is a freemium subscription. The Free plan demonstrates the core value
 
 ## Plans
 
-|                                       | Free                  | Core                        | Pro                         |
-| ------------------------------------- | --------------------- | --------------------------- | --------------------------- |
-| **Price**                             | $0                    | **$29/month**               | **$99/month**               |
-| **Analysis runs**                     | 1 per month           | Unlimited                   | Unlimited                   |
-| **AI recommendation set**             | 1 preview             | Full set with dollar impact | Full set with dollar impact |
-| **Menu matrix dashboard**             | Yes                   | Yes                         | Yes                         |
-| **Bundle & cannibalization insights** | Yes                   | Yes                         | Yes                         |
-| **Revenue forecasting & seasonality** | Yes                   | Yes                         | Yes                         |
-| **Weekly & monthly reports**          | Yes (preview content) | Yes                         | Yes                         |
-| **Square POS integration**            | Yes                   | Yes                         | Yes                         |
-| **Priority support**                  | —                     | —                           | Yes                         |
-| **Early access to new features**      | —                     | —                           | Yes                         |
+|                                       | Free                            | Core                                             | Pro                                              |
+| ------------------------------------- | ------------------------------- | ------------------------------------------------ | ------------------------------------------------ |
+| **Price**                             | $0                              | **$29/month**                                    | **$99/month**                                    |
+| **Analysis runs**                     | 1 per month                     | Unlimited                                        | Unlimited                                        |
+| **AI recommendation set**             | Up to 1 preview                 | Full set; dollar-impact estimates when available | Full set; dollar-impact estimates when available |
+| **Menu matrix dashboard**             | Yes                             | Yes                                              | Yes                                              |
+| **Bundle & cannibalization insights** | Yes                             | Yes                                              | Yes                                              |
+| **Revenue forecasting & seasonality** | Yes                             | Yes                                              | Yes                                              |
+| **Weekly & monthly reports**          | Yes (preview content when sent) | Yes (full content when sent)                     | Yes (full content when sent)                     |
+| **Square POS integration**            | Yes                             | Yes                                              | Yes                                              |
+| **Priority support**                  | —                               | —                                                | Yes                                              |
+| **Early access to new features**      | —                               | —                                                | Yes                                              |
 
 All paid plans are **flat-rate** — usage is not metered and there are no overage charges.
 
@@ -30,8 +30,8 @@ All paid plans are **flat-rate** — usage is not metered and there are no overa
 One counter tracks analysis runs for the current billing cycle.
 
 - **Free**: the plan allows 1 analysis per month. Hitting the limit returns a clear `usage_limit_exceeded` error with an upgrade call to action. The atomic claim means a run that fails validation **does not** burn your allowance.
-- **Free recommendations**: the free plan shows the single highest-impact pending recommendation as a preview; the rest of the set is locked with a count teaser pointing at the upgrade path. What the app withholds is never leaked elsewhere — the weekly digest carries only the same preview.
-- **Core and Pro**: unlimited analyses and the complete AI recommendation set with dollar-impact projections.
+- **Free recommendations**: the free plan shows up to one recommendation as a preview; the rest of the set is locked with a count teaser pointing at the upgrade path. Weekly digest emails apply the same preview limit and carry only that preview when one is available.
+- **Core and Pro**: unlimited analyses and the complete AI recommendation set, with dollar-impact estimates where available.
 
 Counters reset monthly via the `reset_all_usage_counters` task. Stripe subscribers reset on `invoice.paid` instead, and the calendar reset excludes them.
 
@@ -50,11 +50,11 @@ Core and Pro are month-to-month with no long-term commitment. Cancel anytime fro
 
 ## Enforcement behavior
 
-| Action                  | Free                                                    | Core         | Pro          |
-| ----------------------- | ------------------------------------------------------- | ------------ | ------------ |
-| Run analysis            | Allowed while count \< 1, else blocked with upgrade CTA | Allowed      | Allowed      |
-| View recommendation set | 1 preview; rest locked with upgrade teaser              | Full set     | Full set     |
-| Receive reports         | Digest/report with preview content                      | Full content | Full content |
+| Action                   | Free                                                                      | Core                    | Pro                     |
+| ------------------------ | ------------------------------------------------------------------------- | ----------------------- | ----------------------- |
+| Run analysis             | Allowed while count \< 1, else blocked with upgrade CTA                   | Allowed                 | Allowed                 |
+| View recommendation set  | 1 preview; rest locked with upgrade teaser                                | Full set                | Full set                |
+| Report content when sent | At most one preview recommendation; remaining recommendations stay locked | Full recommendation set | Full recommendation set |
 
 ## Related
 

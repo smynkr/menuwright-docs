@@ -22,11 +22,35 @@
       "current-state",
       "ledger"
     ],
+    "menuwright/account-branding.mdx": [
+      "ledger"
+    ],
+    "menuwright/billing.mdx": [
+      "ledger"
+    ],
+    "menuwright/csv-import.mdx": [
+      "ledger"
+    ],
+    "menuwright/faq.mdx": [
+      "ledger"
+    ],
+    "menuwright/getting-started.mdx": [
+      "ledger"
+    ],
     "menuwright/index.mdx": [
       "current-state",
       "ledger"
     ],
+    "menuwright/insights-trends.mdx": [
+      "ledger"
+    ],
     "menuwright/menu-matrix.mdx": [
+      "ledger"
+    ],
+    "menuwright/reports.mdx": [
+      "ledger"
+    ],
+    "menuwright/square.mdx": [
       "ledger"
     ],
     "next.config.mjs": [
@@ -60,8 +84,16 @@
     "app/(home)/page.tsx": "a5c6fdc1f1e9ecf90037598edeebff1d2f6fee89dfe940eb22dc687f14eb292e",
     "components/brand/products.ts": "9b186cd5be6e5e8c51fe8bf48bbc0b20df402aaeeef9a8267452d4f3febc31c0",
     "docs.json": "1fa24927a5aad2c4118b4d4c6268d09157b4c1431feeed2ccfe612de1c15386e",
-    "menuwright/index.mdx": "16c4cf226088e6153470dd1b012a50e50a0a7c2fe32f8e3a2a1bb2b6efcf0152",
-    "menuwright/menu-matrix.mdx": "721022989e0ad94452461d11ec155604beb3136f7118be90092f0b3cba6bbbf9",
+    "menuwright/account-branding.mdx": "d1988030ccad8270d0617bfac2e12088df8e65d327e5f703644888ff3d059d3c",
+    "menuwright/billing.mdx": "59058fd75aa9096a93c7d7f29e9a665b17d0786477de951bacefff1715f4ad43",
+    "menuwright/csv-import.mdx": "32b222722b98675f5c5b3e7ddbf572a6d1833d7160c79a458135ae91702ea445",
+    "menuwright/faq.mdx": "99caabaea939407ea5d6a8aedf92739ef855e3800d1cf50cdacf104cfd482f99",
+    "menuwright/getting-started.mdx": "0efafaee3c7a55fc662688950a4369a101f16b693c719779b6ac8b3adaebf2e1",
+    "menuwright/index.mdx": "641fe086ca8fcb2f19602a883e0173804376832f915ee637114f3b6827e094ea",
+    "menuwright/insights-trends.mdx": "8bcf4d0d60dbbc0099374c49fd39b9dba149031363ef9e437c19afdfbdaa75d6",
+    "menuwright/menu-matrix.mdx": "8bb4e3dbe8950aa38dc353cf22771aa43641c42ef04b4aaadac2f3bfb0bd55ab",
+    "menuwright/reports.mdx": "cd04c16e8d76e6c9360a163f1966d01af4526869d31c75be8f0b97ddcea4e03a",
+    "menuwright/square.mdx": "98ff0b897acd715e1e414a96e4729101fdbf6aa55b6e92ddce712bb7d29956bf",
     "next.config.mjs": "e829914a5f83fab8d38b7b9ef99a623d691c38790bf0be21c0fd2a07874c7fd4",
     "package.json": "e3faaf669b7f9b476e0210916434c5c4fd8dd829c316376321127e713943757a",
     "pipeline/docs-agent.mjs": "27a31835822a2e7ff4eb724cec1c0429e243c94d17776383c98934b0b03d05f7",

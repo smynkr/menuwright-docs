@@ -35,7 +35,7 @@ Fresh tenants often arrive with sales data but no menu yet. Pass `create_missing
 
 Upload a file with `item_name` and `food_cost` columns (aliases like `name`, `item`, `cost`, or `food cost` are accepted; headers are normalized). Rows without a usable cost are dropped.
 
-Food costs unlock the full profit-based matrix — see the [menu matrix guide](/menuwright/menu-matrix) for what changes.
+Entering a usable food cost enables contribution-margin classification for that item. With partial coverage, uncoded items remain provisional and use a revenue-share classification; with no usable costs, revenue share is only a profitability proxy. Enter costs for every active item to interpret every item by contribution margin. See the [menu matrix guide](/menuwright/menu-matrix) for details.
 
 ## Excel specifics
 
@@ -47,9 +47,9 @@ Food costs unlock the full profit-based matrix — see the [menu matrix guide](/
 
 Uploads are capped at a fixed ceiling and enforced in chunks, so oversized files fail fast with a clear error instead of exhausting memory.
 
-## Sync history
+## Import results
 
-Every import writes a `POSSyncLog` row with source (`square`, `csv`, `excel`), records imported, and status — so you always know where your data came from.
+Sales uploads return imported-row counts, unmatched item names, and created/restored-item counts when `create_missing_items=true`. Cost uploads return matched and unmatched counts. These file imports do not create POS-sync log records, so they are not represented as POS-sync history entries.
 
 ## Related
 
