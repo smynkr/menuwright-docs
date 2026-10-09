@@ -1,14 +1,38 @@
 ---
 title: Durable ledger
 category: current-state
-updated: 2026-08-28
+updated: 2026-10-09
 summary: Dated durable facts and their source anchors
 nav_order: 130
-sources: [".codex/harness-memory.json", "README.md", "package.json", "next.config.mjs", "docs.json", "_migration/tools/lib/shared.mjs", "components/brand/products.ts", "public/logo.svg", "pipeline/docs-agent.mjs", "pipeline/docs-agent.yml", "pipeline/test/regression.test.mjs"]
+sources: [".codex/harness-memory.json", "README.md", "package.json", "next.config.mjs", "docs.json", "_migration/tools/lib/shared.mjs", "components/brand/products.ts", "public/logo.svg", "pipeline/docs-agent.mjs", "pipeline/docs-agent.yml", "pipeline/test/regression.test.mjs", "menuwright/index.mdx", "menuwright/menu-matrix.mdx"]
 ---
 
 # Durable ledger
 
+## 2026-10-09 — MenuWright standalone guide alignment
+
+The standalone landing page and menu-matrix methodology were aligned to the
+MenuWright product source at [MenuMakeover
+`669272490209f0b81a85f0596f97de443e354b83`](https://github.com/smynkr/MenuMakeover/tree/669272490209f0b81a85f0596f97de443e354b83).
+The landing page adds discovery for the existing Menu Scan guide and keeps the
+sample-data, missing-cost, and Square sandbox limits explicit. This editorial
+update does not establish a Square production launch; the integration remains
+described as sandbox-only pending production app review.
+
+- When a sales record has positive quantity and revenue, the engine derives
+  effective unit price from gross revenue divided by quantity; otherwise it
+  uses menu price. Partial-cost items without food costs receive provisional
+  revenue-share classifications, while no-cost mode uses revenue share only as
+  a profitability proxy
+  ([analysis engine](https://github.com/smynkr/MenuMakeover/blob/669272490209f0b81a85f0596f97de443e354b83/backend/app/services/analysis.py#L52-L100),
+  [classification paths](https://github.com/smynkr/MenuMakeover/blob/669272490209f0b81a85f0596f97de443e354b83/backend/app/services/analysis.py#L132-L245)).
+- Dashboard quadrant names are product-facing aliases; they do not rename the
+  analysis engine's underlying labels
+  ([dashboard labels](https://github.com/smynkr/MenuMakeover/blob/669272490209f0b81a85f0596f97de443e354b83/frontend/src/components/menu-matrix.tsx#L31-L49)).
+
+These are source-alignment and guide-discovery clarifications, not a product
+release; the product changelog remains unchanged. [[current-state]] remains the
+repository topology summary.
 
 ## 2026-08-28 — Docs-agent Cloudflare controls shipped
 
