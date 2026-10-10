@@ -1,13 +1,37 @@
 ---
 title: Durable ledger
 category: current-state
-updated: 2026-10-09
+updated: 2026-10-10
 summary: Dated durable facts and their source anchors
 nav_order: 130
-sources: [".codex/harness-memory.json", "README.md", "package.json", "next.config.mjs", "docs.json", "_migration/tools/lib/shared.mjs", "components/brand/products.ts", "public/logo.svg", "pipeline/docs-agent.mjs", "pipeline/docs-agent.yml", "pipeline/test/regression.test.mjs", "menuwright/index.mdx", "menuwright/menu-matrix.mdx", "menuwright/csv-import.mdx", "menuwright/getting-started.mdx", "menuwright/reports.mdx", "menuwright/faq.mdx", "menuwright/billing.mdx", "menuwright/square.mdx", "menuwright/insights-trends.mdx", "menuwright/account-branding.mdx"]
+sources: [".codex/harness-memory.json", "README.md", "package.json", "next.config.mjs", "docs.json", "app/layout.tsx", "_migration/tools/lib/shared.mjs", "components/brand/products.ts", "public/logo.svg", "pipeline/docs-agent.mjs", "pipeline/docs-agent.yml", "pipeline/test/regression.test.mjs", "menuwright/index.mdx", "menuwright/menu-matrix.mdx", "menuwright/csv-import.mdx", "menuwright/getting-started.mdx", "menuwright/reports.mdx", "menuwright/faq.mdx", "menuwright/billing.mdx", "menuwright/square.mdx", "menuwright/insights-trends.mdx", "menuwright/account-branding.mdx"]
 ---
 
 # Durable ledger
+
+## 2026-10-10 — MenuWright report and Square sync boundaries
+
+The standalone reports, billing, FAQ, Square, getting-started, and CSV
+guides were aligned to pinned product source at [MenuMakeover
+`669272490209f0b81a85f0596f97de443e354b83`](https://github.com/smynkr/MenuMakeover/tree/669272490209f0b81a85f0596f97de443e354b83).
+These are documentation corrections only; they do not prove that a scheduler,
+worker, report delivery, or production Square approval is active.
+
+- Report payloads limit plans not explicitly paid to one recommendation when
+  any are available; pending items are preferred before other statuses, then
+  estimated-impact availability and amount, priority, and recency. Paid plans
+  pass the full recommendation list to the templates, but the weekly digest
+  displays at most three while the monthly PDF renders the full supplied list.
+  Provider acceptance is not inbox delivery. [report task](https://github.com/smynkr/MenuMakeover/blob/669272490209f0b81a85f0596f97de443e354b83/backend/app/tasks/reports.py) · [weekly template](https://github.com/smynkr/MenuMakeover/blob/669272490209f0b81a85f0596f97de443e354b83/backend/app/templates/weekly_digest.html) · [PDF template](https://github.com/smynkr/MenuMakeover/blob/669272490209f0b81a85f0596f97de443e354b83/backend/app/templates/report.html)
+- Celery Beat source config schedules daily Square sync and hourly report
+  dispatchers; report tasks check each restaurant's local 8 AM window. This
+  is configured backend behavior, not evidence of an active scheduler or
+  worker. [schedule](https://github.com/smynkr/MenuMakeover/blob/669272490209f0b81a85f0596f97de443e354b83/backend/app/celery_app.py) · [report tasks](https://github.com/smynkr/MenuMakeover/blob/669272490209f0b81a85f0596f97de443e354b83/backend/app/tasks/reports.py)
+- The Square sync task writes `POSSyncLog` entries; CSV sales and cost imports
+  return import results but do not create sync-log records.
+  [Square sync](https://github.com/smynkr/MenuMakeover/blob/669272490209f0b81a85f0596f97de443e354b83/backend/app/tasks/sync.py) · [sales importer](https://github.com/smynkr/MenuMakeover/blob/669272490209f0b81a85f0596f97de443e354b83/backend/app/api/sales.py) · [cost importer](https://github.com/smynkr/MenuMakeover/blob/669272490209f0b81a85f0596f97de443e354b83/backend/app/api/menu_items.py)
+
+Separately, the docs shell requests Inter as a variable font through Next's Google-font loader (`app/layout.tsx`); this is a site-build configuration change, not a MenuWright behavior change.
 
 ## 2026-10-09 — MenuWright standalone guide alignment
 

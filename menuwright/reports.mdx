@@ -9,10 +9,10 @@ The backend defines two recurring report tasks:
 - A weekly HTML email digest.
 - A monthly PDF report attached to an email.
 
-A send attempt requires a completed analysis, an active owner email, and running scheduled workers; successful provider acceptance still does not prove that a message reached an inbox.
+A scheduled report attempt depends on the configured Celery Beat and workers running, plus a completed analysis and an active owner email. Source configuration does not prove those services are active for a deployment, and provider acceptance does not prove inbox delivery.
 
 <Callout>
-  The backend report code includes a Free-plan preview path: Free reports can include one recommendation preview when the analysis has a recommendation; Core and Pro can include the full set. Plan eligibility does not guarantee that a report is sent or delivered.
+  The report task gives Free plans at most one available recommendation preview; paid plans pass the full recommendation set to the templates. The weekly digest displays at most three recommendations, while the monthly PDF renders the full supplied set. These plan and content rules do not guarantee that a report is sent or delivered.
 </Callout>
 
 ## Weekly email digest
@@ -25,7 +25,7 @@ The weekly task renders an HTML email with:
 - Up to three recommendations associated with the latest completed analysis; the task does not restrict them to recommendations created during that week. Projected monthly impact appears only when a recommendation has an estimate.
 - A link back to the full dashboard.
 
-The digest template shows up to three recommendations. Free accounts receive at most one preview recommendation when the analysis has one; any remaining recommendations stay locked behind the paid-plan upgrade note.
+The digest template displays up to three recommendations from the task's payload. For a Free preview, pending recommendations are preferred before other statuses, then the task sorts by whether projected impact is available, its amount, priority, and recency. If there are no recommendations, no preview appears. Paid plans pass the full set, but the weekly email still displays only three.
 
 ## Monthly PDF report
 
@@ -55,7 +55,7 @@ In the backend schedule, Celery Beat runs both dispatchers hourly. Each checks t
 | Weekly digest | The dispatcher checks the restaurant's local **8 AM** hour. | An enqueue-time marker prevents duplicates; after provider acceptance, another dispatch is blocked for at least 7 days. |
 | Monthly PDF | The dispatcher checks the restaurant's local **8 AM** hour on the **first day of the month**. | An enqueue-time marker prevents duplicates; after provider acceptance, another dispatch is blocked for at least 27 days. |
 
-The dispatcher claims a send before enqueueing the delivery task. If the email-provider request fails, the task clears the marker so a later hourly check can retry. A report-generation failure after the claim can leave the marker in place, so it may not be retried automatically. A restaurant without a completed analysis or active owner email is skipped and remains eligible for a later attempt. The schedule and provider response describe backend behavior, not evidence that a specific report reached an inbox.
+The dispatcher claims a send before enqueueing the delivery task. If the email-provider request fails, the task clears the marker so a later hourly check can retry. A report-generation failure after the claim can leave the marker in place, so it may not be retried automatically. A restaurant without a completed analysis or active owner email is skipped and remains eligible for a later attempt. Celery Beat and task code describe backend behavior; they do not verify a running scheduler or worker, an active deployment, or inbox delivery.
 
 ## Plan behavior
 
@@ -63,9 +63,8 @@ Delivery and recommendation access are separate concerns:
 
 | Detail | Free | Core | Pro |
 |---|---|---|---|
-| Weekly digest | Preview recommendation content | Full recommendation set | Full recommendation set |
-| Monthly PDF | Preview recommendation content | Full recommendation set | Full recommendation set |
-| Recommendation set in the report | At most one preview recommendation; remaining recommendations stay locked | Full recommendation set | Full recommendation set |
+| Weekly digest | Up to one available preview; other recommendations stay locked | Up to three recommendations | Up to three recommendations |
+| Monthly PDF | Up to one available preview; other recommendations stay locked | Full available set | Full available set |
 
 The report payload treats any plan that is not explicitly paid as Free for recommendation locking. That keeps report content aligned with the in-app recommendation preview instead of leaking the withheld set through email.
 

@@ -3,7 +3,7 @@ title: "Billing and plans"
 description: "Free, Core, and Pro plans — flat monthly pricing, usage limits, and how MenuWright enforces them."
 ---
 
-MenuWright is a freemium subscription. The Free plan demonstrates the core value; paid plans remove the limits.
+MenuWright is a freemium subscription. Free includes one analysis run per month; paid plans remove that run limit and unlock the full recommendation set. Weekly digests still display at most three recommendations.
 
 ## Plans
 
@@ -15,7 +15,7 @@ MenuWright is a freemium subscription. The Free plan demonstrates the core value
 | **Menu matrix dashboard** | Yes | Yes | Yes |
 | **Bundle & cannibalization insights** | Yes | Yes | Yes |
 | **Revenue forecasting & seasonality** | Yes | Yes | Yes |
-| **Weekly & monthly reports** | Yes (preview content when sent) | Yes (full content when sent) | Yes (full content when sent) |
+| **Weekly & monthly reports** | Yes (up to one available preview when sent) | Yes (weekly up to 3; monthly full set when sent) | Yes (weekly up to 3; monthly full set when sent) |
 | **Square POS integration** | Yes | Yes | Yes |
 | **Priority support** | — | — | Yes |
 | **Early access to new features** | — | — | Yes |
@@ -27,7 +27,7 @@ All paid plans are **flat-rate** — usage is not metered and there are no overa
 One counter tracks analysis runs for the current billing cycle.
 
 - **Free**: the plan allows 1 analysis per month. Hitting the limit returns a clear `usage_limit_exceeded` error with an upgrade call to action. The atomic claim means a run that fails validation **does not** burn your allowance.
-- **Free recommendations**: the free plan shows up to one recommendation as a preview; the rest of the set is locked with a count teaser pointing at the upgrade path. Weekly digest emails apply the same preview limit and carry only that preview when one is available.
+- **Free recommendations**: the free plan shows up to one recommendation preview; filters can leave the visible list empty. The remaining set is locked with an upgrade teaser. Weekly digests apply the same at-most-one cap when a preview is available.
 - **Core and Pro**: unlimited analyses and the complete AI recommendation set, with dollar-impact estimates where available.
 
 Counters reset monthly via the `reset_all_usage_counters` task. Stripe subscribers reset on `invoice.paid` instead, and the calendar reset excludes them.
@@ -51,7 +51,7 @@ Core and Pro are month-to-month with no long-term commitment. Cancel anytime fro
 |---|---|---|---|
 | Run analysis | Allowed while count < 1, else blocked with upgrade CTA | Allowed | Allowed |
 | View recommendation set | Up to 1 preview; rest locked with upgrade teaser | Full set | Full set |
-| Report content when sent | At most one preview recommendation; remaining recommendations stay locked | Full recommendation set | Full recommendation set |
+| Report content when sent | Up to one available preview; others stay locked when present | Weekly: up to three; monthly: full available set | Weekly: up to three; monthly: full available set |
 
 ## Related
 

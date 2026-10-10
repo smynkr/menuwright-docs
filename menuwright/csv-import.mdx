@@ -46,7 +46,7 @@ Uploads are capped at a fixed ceiling and enforced in chunks, so oversized files
 
 ## Import results
 
-Sales uploads return imported-row counts, unmatched item names, and created/restored-item counts when `create_missing_items=true`. Cost uploads return matched and unmatched counts. These file imports do not create POS-sync log records, so they are not represented as POS-sync history entries.
+Sales uploads return imported-row counts, unmatched item names, and created/restored-item counts when `create_missing_items=true`. Cost uploads return matched and unmatched counts. These file imports do not create `POSSyncLog` rows, so their import results are not represented in Square POS-sync history.
 
 ## Related
 
