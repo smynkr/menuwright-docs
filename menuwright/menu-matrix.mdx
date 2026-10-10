@@ -1,9 +1,9 @@
 ---
 title: "Menu matrix methodology"
-description: "How MenuWright classifies every menu item on profitability and popularity using the Kasavana–Smith menu engineering method."
+description: "How MenuWright classifies menu items using sales mix and cost-aware profitability signals with the Kasavana–Smith method."
 ---
 
-The menu matrix is MenuWright's core model. Every menu item is scored on two axes — **popularity** (menu mix) and **profitability** (contribution margin) — then placed in one of four quadrants. The method follows the classic Kasavana–Smith menu engineering approach (1982), the industry-standard way to classify items by what they earn and how often they sell.
+The menu matrix is MenuWright's core model. Every menu item is placed using two axes — **popularity** (menu mix) and a profitability signal: contribution margin for items with usable food costs, or a revenue-share proxy for items without them. The method follows the classic Kasavana–Smith menu engineering approach (1982), the industry-standard way to classify items by what they earn and how often they sell.
 
 ## The two axes
 
@@ -29,11 +29,15 @@ An item is "high" on an axis when it clears that axis's threshold:
 | Axis | Threshold |
 |---|---|
 | **Popularity** | `1 / N × 0.70`, rounded to 0.01 (with a 0.01 floor). `N` is the number of active menu items. |
-| **Profitability** | The quantity-weighted average contribution margin across items with usable food costs. |
 
-The profitability threshold is computed over all cost-known items in full-cost
-mode and over cost-known items only in partial-cost mode. Values are rounded to
-cents; an item at or above its applicable threshold counts as high.
+The profitability threshold is the quantity-weighted average contribution
+margin for cost-known items. It uses all items in full-cost mode and only the
+cost-known subset in partial-cost mode. Values are rounded to cents; an item
+at or above its applicable threshold counts as high.
+
+With no cost data, the engine uses each item's gross-revenue share as a
+profitability proxy; its cutoff is the quantity-weighted average of those
+shares, not a contribution-margin threshold.
 
 ## The four quadrants
 
