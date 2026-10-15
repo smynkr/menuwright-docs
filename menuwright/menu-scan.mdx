@@ -1,10 +1,10 @@
 ---
 title: "Menu Scan and redesign"
-description: "Upload a menu photo, review the extracted structure, and generate a matrix-informed layout redesign."
-keywords: ["menu scan", "menu photo", "redesign", "prominence", "layout", "menu image"]
+description: "Upload a menu photo, review the extracted structure, generate a matrix-informed layout redesign, and compare a competitor menu's prices against your own."
+keywords: ["menu scan", "menu photo", "redesign", "prominence", "layout", "menu image", "competitor price comparison"]
 ---
 
-Menu Scan turns a photo of a printed menu into structured sections and items. You can then compare the scanned layout with a MenuWright matrix analysis and preview or download a redesigned menu.
+Menu Scan turns a photo of a printed menu into structured sections and items. You can then compare the scanned layout with a MenuWright matrix analysis, preview or download a redesigned menu, or compare a competitor's scanned prices against your own.
 
 <Callout>
   Menu Scan is a separate flow from a sales import. It reads the menu's visible structure and layout; it does not create sales history or replace a menu analysis.
@@ -33,7 +33,7 @@ After a successful scan, the page reports the restaurant name, number of extract
 - The extracted price, when one is present.
 - A visual prominence score from `0` to `100`, when scoring data is available.
 
-The scan is returned with an integrity token. Keep the extracted result in the flow so the recommendation and redesign requests can verify that it was issued for the active restaurant and was not modified.
+The scan is returned with an integrity token. Keep the extracted result in the flow so the competitor comparison, recommendation, and redesign requests can verify that it was issued for the active restaurant and was not modified.
 
 ### 3. Choose a matrix analysis
 
@@ -63,6 +63,25 @@ The redesign applies the plan to a copy of the scanned menu sections and renders
 
 If PDF rendering is unavailable, MenuWright returns an honest error and does not send HTML with a `.pdf` extension. Use the HTML preview while the PDF renderer is unavailable.
 
+## Compare a competitor menu's prices
+
+The same scan flow can also price-check a competitor. Scan the competitor's printed menu, then compare its extracted prices against your active menu items. The comparison is available on **Core and Pro**; Free accounts receive an upgrade prompt, the same gate as AI cost estimation.
+
+The comparison reuses the signed scan from the upload step, so the integrity rules are identical: the scan must have been issued for your restaurant and must not be modified. The request is capped at 1 MB, and nothing is stored — every comparison is computed against your current menu.
+
+Your restaurant needs active menu items with prices before a comparison can run.
+
+Matching is deliberately conservative, because a wrong match is worse than no match. Each scanned item lands in one of four buckets:
+
+- **Exact** — the name matches one of your items after normalizing casing and punctuation.
+- **Uncertain** — the name overlaps strongly with exactly one of your items (for example, a scanned "Chicken Panini" against your "Grilled Chicken Panini"). When two of your items tie for the best overlap, neither is chosen. Verify portion size and preparation before acting on an uncertain price gap.
+- **Unmatched** — no plausible match. Items whose names appear more than once on either menu are also left unmatched, because duplicates (such as lunch and dinner portions sharing a name) are ambiguous.
+- **No price** — the scanned price was missing or unreadable, so no price difference can be computed even when the name matches.
+
+Scanned menu prices do not carry a currency code, so every comparison assumes your restaurant's own currency (USD by default) and the result states that assumption explicitly.
+
+The result lists matched items first, sorted by the size of the price gap, and also summarizes how many of your items are priced lower or higher than their matches, plus the median percentage difference across matched prices.
+
 ## Troubleshooting
 
 | Symptom | What to do |
@@ -70,6 +89,9 @@ If PDF rendering is unavailable, MenuWright returns an honest error and does not
 | The scan is rejected | Confirm the file is PNG, JPEG, or WebP, is under 8 MB, and is a readable image whose bytes match its declared type. |
 | The scan succeeds but no plan is available | Run a menu analysis, then select it in the plan section. |
 | The plan shows no changes | The scanned layout already matches the available matrix guidance, or the scan item could not be matched unambiguously to the selected analysis. |
+| The comparison asks you to add menu items | Your restaurant needs active menu items with prices before a competitor scan can be compared. |
+| The comparison returns an upgrade prompt | Competitor price comparison is included on Core and Pro. |
+| A matched price gap looks wrong | Matches marked **uncertain** are name-overlap guesses, not confirmed equivalents. Verify portion size and preparation before acting on the gap. |
 | The HTML preview does not open | Allow popups for the MenuWright site and try the preview again. |
 | PDF generation fails | Use the HTML preview; the PDF renderer may be temporarily unavailable. |
 
@@ -84,5 +106,8 @@ If PDF rendering is unavailable, MenuWright returns an honest error and does not
   </Card>
   <Card title="Data import" icon="file-text" href="/menuwright/data-import">
     Add menu items and costs for analysis.
+  </Card>
+  <Card title="Billing and plans" icon="settings" href="/menuwright/billing">
+    Review which plans include competitor price comparison.
   </Card>
 </Cards>
