@@ -3,7 +3,7 @@ title: "Get started with MenuWright"
 description: "Sign up, bring your menu and sales data, and run your first menu engineering analysis in under ten minutes."
 ---
 
-MenuWright classifies every menu item by profitability and popularity, then turns the result into prioritized recommendations — reprice, promote, bundle, or cut — with projected monthly dollar impact. In this guide you'll sign up, load data, and run your first analysis.
+MenuWright compares item popularity with a profitability signal: contribution margin for items with known food costs and a revenue-share proxy for items without them. Its AI can suggest actions; a projected monthly dollar impact appears only when the product can estimate one. This guide walks through sign-up, data import, and your first analysis.
 
 ## Prerequisites
 
@@ -36,43 +36,43 @@ After data loads, review the imported menu items and fix any category mismatches
 
 ## 4. Enter food costs
 
-Food costs drive contribution margins and the full profit-based matrix. Enter them per item, or upload a cost file with `item_name` and `food_cost` columns. Without food costs, MenuWright still classifies by popularity and revenue — the [menu matrix guide](/menuwright/menu-matrix) explains the difference.
+Enter food costs for as many items as possible. Items with usable costs use contribution-margin classification. With partial coverage, uncoded items receive a provisional revenue-share classification; with no usable costs, revenue share is a profitability proxy for all items. Every active item needs a usable cost for a complete contribution-margin view. See the [menu matrix guide](/menuwright/menu-matrix) for details.
 
 ## 5. Run your first analysis
 
 Choose an analysis period and run. MenuWright:
 
-1. Computes menu mix (popularity) and contribution margin (profitability) per item
-2. Places every item in one of four quadrants — **Star**, **Crowd Pleaser**, **Hidden Gem**, or **Leftover**
-3. Generates AI recommendations with projected monthly dollar impact
+1. Computes menu mix (popularity) and contribution margins only for items with usable food costs; items without costs use a revenue-share profitability signal.
+2. Places each item in one of four quadrants using its applicable signal — contribution margin where costs are known, revenue share where they are not.
+3. Generates AI recommendations; a projected monthly dollar impact appears only when one can be estimated.
 4. Saves an immutable snapshot so you can track changes over time
 
-Your first analysis is the moment the product earns its keep: you'll see which items are quietly losing you money and exactly what to do about them.
+Without complete usable food-cost coverage, the profitability signal is not a true contribution margin for every item; no-cost analysis cannot show which items earn or lose money. Recommendations are suggestions, and any projected impact is an estimate rather than a guarantee.
 
 ## 6. Act on the recommendations
 
-The dashboard's Recommendations feed lists prioritized actions with their projected impact. Accept or dismiss each one — your decisions feed back into future recommendation quality. When you accept a recommendation, MenuWright begins tracking the item's actual daily revenue before and after the action; once both windows have at least 7 days of recorded sales, the card shows an **observed revenue change** alongside the original projection. See the [FAQ](/menuwright/faq) for what that number does and doesn't mean.
+The dashboard's Recommendations feed lists prioritized actions and displays projected impact only when one can be estimated. Accept or dismiss each one — your decisions feed back into future recommendation quality. When you accept a recommendation, MenuWright tracks the item's revenue before and after the action; it may show an observed revenue change once both windows have at least 7 days of recorded sales. See the [FAQ](/menuwright/faq) for what that number does and doesn't mean.
 
 ## What you'll see
 
 | Surface | What it shows |
 |---|---|
 | **Menu matrix** | Interactive scatter plot of popularity × profitability with quadrant shading |
-| **Recommendations** | Prioritized AI actions with projected monthly dollar impact, plus observed revenue change after acting |
+| **Recommendations** | Prioritized AI suggestions, with impact estimates when available and an observed revenue change for accepted actions when measurement windows are complete. |
 | **Insights** | Bundle opportunities, cannibalization detection, and demand forecasting |
-| **Trends** | Revenue, margin, and classification movement over time |
-| **Data** | Menu items, food costs, sync history, and manual sync |
+| **Trends** | Revenue, contribution-margin trends when cost inputs support them, and classification movement over time |
+| **Data** | Menu items, food costs, Square POS sync history, and manual sync; CSV/Excel upload results are shown separately and do not create POS sync history |
 | **Settings** | Restaurant profile, Square connection, and billing |
 
 <ProcessFlow
   accent="#5D3EFB"
-  caption="From sign-up to actionable menu engineering: load sales data, classify every item on the popularity × profitability matrix, and act on dollar-impact recommendations. Square sync currently runs against the sandbox environment."
+  caption="From sign-up to menu analysis: compare popularity with contribution margins where costs are known or revenue-share proxies where they are not. Review suggestions, with impact estimates only when available. Square sync currently runs against the sandbox environment."
   steps={[
     { title: "Create your account", description: "Verify your email and enter the onboarding wizard." },
     { title: "Bring your data", description: "Connect Square, import CSV/Excel sales history, or load sample data." },
-    { title: "Review items and costs", description: "Fix category mismatches and enter food costs to drive contribution margins." },
-    { title: "Run your first analysis", description: "Classify every item as Star, Crowd Pleaser, Hidden Gem, or Leftover." },
-    { title: "Act on recommendations", description: "Accept or dismiss prioritized actions with projected monthly dollar impact." },
+    { title: "Review items and costs", description: "Fix category mismatches and enter food costs to calculate contribution margins for those items." },
+    { title: "Run your first analysis", description: "Classify items using cost-based margins where costs are known or revenue-share proxies where they are not." },
+    { title: "Act on recommendations", description: "Review prioritized suggestions; monthly impact estimates appear when available." },
   ]}
 />
 
